@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eva AI Assistant</title>
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        #eva-orb { width: 150px; height: 150px; background: radial-gradient(circle, #00d4ff, #004e92); border-radius: 50%; box-shadow: 0 0 50px #00d4ff; transition: 0.3s; cursor: pointer; }
+        .listening { transform: scale(1.2); box-shadow: 0 0 80px #00d4ff; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #transcript { margin-top: 30px; font-size: 1.2rem; color: #ccc; text-align: center; max-width: 80%; }
+    </style>
+</head>
+<body>
+
+    <div id="eva-orb" onclick="toggleListening()"></div>
+    <div id="status">Click the orb to talk to Eva</div>
+    <div id="transcript"></div>
+
+    <script>
+        // Simple logic to handle the "Listening" state
+        async function toggleListening() {
+    const orb = document.getElementById('eva-orb');
+    const status = document.getElementById('status');
+    const transcriptDiv = document.getElementById('transcript');
+
+    // 1. Visual Feedback
+    orb.classList.add('listening');
+    status.innerText = "Eva is listening...";
+
+    try {
+        // 2. This part connects to your Python Server (Running on port 59059)
+        const response = await fetch('/run-eva', { // HIGHLIGHT: No IP needed here!
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: transcript })
+    });
+
+        const data = await response.json();
+
+        // 3. Update the UI with what you said
+        transcriptDiv.innerText = "You: " + data.transcript;
+        status.innerText = "Eva: " + data.response;
+
+    } catch (error) {
+        status.innerText = "Error: Python server not found";
+        console.error("Make sure eva.py is running!", error);
+    } finally {
+        // 4. Stop the animation
+        orb.classList.remove('listening');
+    }
+}
+    </script>
+</body>
+</html>
