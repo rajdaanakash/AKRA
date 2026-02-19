@@ -3,7 +3,8 @@ import pyttsx3
 import datetime
 import webbrowser
 import os
-
+from flask import Flask, jsonify, send_from_directory   
+from flask_cors import CORS
 
 # Initialize Voice Engine
 engine = pyttsx3.init()
@@ -40,73 +41,90 @@ if __name__ == "__main__":
     
     speak(f"{greeting} Sir. Systems are nominal. EVA is online and ready for your command.")
 
-    while True:
-        query = listen().lower()
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app) # This is critical to allow the HTML file to connect
 
+def process_eva_command(query):
+    query = query.lower()
+    # Put all your "open youtube", "play", etc. logic here
         # Store all your links here
-        websites = {
-            "youtube": "https://www.youtube.com",
-            "google": "https://www.google.com",
-            "instagram": "https://www.instagram.com/",
-            "github": "https://github.com",
-            "gemini": "https://gemini.google.com/app"
-        }
+    websites = {
+        "youtube": "https://www.youtube.com",
+        "google": "https://www.google.com",
+        "instagram": "https://www.instagram.com/",
+        "github": "https://github.com",
+        "gemini": "https://gemini.google.com/app"
+    }
 
-        # The logic to handle the query
-        for site in websites:
-            if f"open {site}" in query:
-                speak(f"Opening {site}")
-                webbrowser.open(websites[site])
+    # The logic to handle the query
+    for site in websites:
+        if f"open {site}" in query:
+            speak(f"Opening {site}")
+            webbrowser.open(websites[site])
+    
         
-            
 
 
-        if "go to sleep" in query:
-            speak("Understood, Sir. Powering down. Have a productive evening.")
+    if "go to sleep" in query:
+        speak("Understood, Sir. Powering down. Have a productive evening.")
+        
+    # Add this below your websites dictionary
+    apps = {
+        "notepad": "notepad.exe",
+        "calculator": "calc.exe",
+        "task manager": "taskmgr.exe",
+        "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "spotify": "C:\\Users\\Lenovo\\Desktop\\Spotify.lnk",
+        "discord": "C:\\Users\\Lenovo\\Desktop\\Discord.lnk",
+        "vs code": "C:\\Users\\Lenovo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Visual Studio Code\\Visual Studio Code.lnk"
+    }
+
+    # Logic to handle opening OS apps
+    for app in apps:
+        if f"open {app}" in query:
+            speak(f"Opening {app}, Sir.")
+            try:
+                os.startfile(apps[app])
+            except Exception as e:
+                speak(f"I'm sorry, I couldn't find the path for {app}.")
             break
 
-        # Add this below your websites dictionary
-        apps = {
-            "notepad": "notepad.exe",
-            "calculator": "calc.exe",
-            "task manager": "taskmgr.exe",
-            "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-            "spotify": "C:\\Users\\Lenovo\\Desktop\\Spotify.lnk",
-            "discord": "C:\\Users\\Lenovo\\Desktop\\Discord.lnk",
-            "vs code": "C:\\Users\\Lenovo\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Visual Studio Code\\Visual Studio Code.lnk"
-        }
+    
+    # task for operating sytems
+    ostask = {
+        "shutdown": "shutdown /s /t 0",
+        "lock": "shutdown /l",
+        "restart": "shutdown /r /t 0",
+        "hibernate": "shutdown /h"
+    }
 
-        # Logic to handle opening OS apps
-        for app in apps:
-            if f"open {app}" in query:
-                speak(f"Opening {app}, Sir.")
-                try:
-                    os.startfile(apps[app])
-                except Exception as e:
-                    speak(f"I'm sorry, I couldn't find the path for {app}.")
-                break
+    for task in ostask:
+        if f"{task} the system" in query:
+            speak(f"{task}ing the system, Sir.")
+            try:
+                os.system(ostask[task])
+            except Exception as e:
+                speak(f"I'm sorry, I couldn't find the path for {task}.")
+            break
+    if "play" in query:
+        song = query.replace("play", "")
+        speak(f"Playing {song} on YouTube.")
+        # This opens the default browser to a YouTube search
+        os.system(f"start https://www.youtube.com/results?search_query={song.replace(' ', '+')}")
 
-        
-        # task for operating sytems
-        ostask = {
-            "shutdown": "shutdown /s /t 0",
-            "lock": "shutdown /l",
-            "restart": "shutdown /r /t 0",
-            "hibernate": "shutdown /h"
-        }
+    return "Command executed"
 
-        for task in ostask:
-            if f"{task} the laptop" in query:
-                speak(f"{task}ing the laptop, Sir.")
-                try:
-                    os.system(ostask[task])
-                except Exception as e:
-                    speak(f"I'm sorry, I couldn't find the path for {task}.")
-                break
-        if "play" in query:
-            song = query.replace("play", "")
-            speak(f"Playing {song} on YouTube.")
-            # This opens the default browser to a YouTube search
-            os.system(f"start https://www.youtube.com/results?search_query={song.replace(' ', '+')}")
+@app.route('/')
+def index():
+    return send_from_directory(app.static_folder, 'index.html')
+@app.route('/run-eva', methods=['POST'])
+def run_eva():
+    # This calls your existing listen() function
+    query = listen() 
+    if query:
+        response_msg = process_eva_command(query)
+        return jsonify({"transcript": query, "response": response_msg})
+    return jsonify({"transcript": "None", "response": "I didn't hear anything"})
 
-
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=59059)
