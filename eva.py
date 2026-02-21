@@ -110,28 +110,38 @@ def save_note(content):
 def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
+        # Explicitly build the URL with your username and token
         repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
         
         repo = git.Repo(BASE_DIR)
 
-        # --- CRITICAL FIX: Tell the cloud who you are ---
+        # Set identity signatures
         with repo.config_writer() as cw:
             cw.set_value("user", "name", "rajdaanakash")
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
         repo.git.add(all=True)
-        repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        
-        origin = repo.remote(name='origin')
-        origin.set_url(repo_url)
-        
-        # Force push to ensure it bypasses "detached head" issues
-        origin.push(refspec='HEAD:main')
-        
-        print("System: Mission logs successfully synced to GitHub.")
-        return True
+        # Check if there are actually changes to commit to avoid errors
+        if repo.is_dirty(untracked_files=True):
+            repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # CRITICAL: Re-set the remote URL to ensure the token is used for THIS push
+            if 'origin' in repo.remotes:
+                origin = repo.remote(name='origin')
+                origin.set_url(repo_url)
+            else:
+                origin = repo.create_remote('origin', repo_url)
+            
+            # Use 'HEAD:main' to tell Render exactly where to push
+            origin.push(refspec='HEAD:main', force=True)
+            print("System: Mission logs successfully synced to GitHub.")
+            return True
+        else:
+            print("System: No new data to sync.")
+            return True
+
     except Exception as e:
-        print(f"Git Sync Error: {e}") # This will show the real error in Render logs
+        print(f"Git Sync Error: {e}") 
         return False
 
 def archive_groq_response(query, response):
