@@ -108,24 +108,30 @@ def save_note(content):
         return False
     
 def push_to_github():
-    """Authenticates with GitHub using the Render token and pushes changes."""
     try:
         token = os.environ.get("GITHUB_TOKEN")
-        # This uses your GitHub username and the secret token for login
-        repo_url = f"https://rajdaanakash:{os.environ.get('GITHUB_TOKEN')}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
         
         repo = git.Repo(BASE_DIR)
+
+        # --- CRITICAL FIX: Tell the cloud who you are ---
+        with repo.config_writer() as cw:
+            cw.set_value("user", "name", "rajdaanakash")
+            cw.set_value("user", "email", "rajdaanakash@gmail.com") # Your Microsoft email
+
         repo.git.add(all=True)
         repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
         origin = repo.remote(name='origin')
         origin.set_url(repo_url)
-        origin.push()
+        
+        # Force push to ensure it bypasses "detached head" issues
+        origin.push(refspec='main:main')
         
         print("System: Mission logs successfully synced to GitHub.")
         return True
     except Exception as e:
-        print(f"Git Sync Error: {e}")
+        print(f"Git Sync Error: {e}") # This will show the real error in Render logs
         return False
 
 def archive_groq_response(query, response):
