@@ -15,6 +15,7 @@ import subprocess
 import shlex
 from bs4 import BeautifulSoup
 from waitress import serve
+import git
 
 # --- CONFIGURATION ---
 
@@ -105,6 +106,27 @@ def save_note(content):
     except Exception as e:
         print(f"Note Saving Error: {e}")
         return False
+    
+def push_to_github():
+    """Authenticates with GitHub using the Render token and pushes changes."""
+    try:
+        token = os.environ.get("GITHUB_TOKEN")
+        # This uses your GitHub username and the secret token for login
+        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        
+        repo = git.Repo(BASE_DIR)
+        repo.git.add(all=True)
+        repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        origin = repo.remote(name='origin')
+        origin.set_url(repo_url)
+        origin.push()
+        
+        print("System: Mission logs successfully synced to GitHub.")
+        return True
+    except Exception as e:
+        print(f"Git Sync Error: {e}")
+        return False
 
 def archive_groq_response(query, response):
     """Saves Groq AI responses into a specific mission directory."""
@@ -126,6 +148,7 @@ def archive_groq_response(query, response):
             f.write(f"EVA RESPONSE:\n{response}\n")
             
         print(f"Interaction archived in: {file_path}")
+        push_to_github()
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
