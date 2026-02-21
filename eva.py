@@ -126,7 +126,7 @@ def push_to_github():
         origin.set_url(repo_url)
         
         # Force push to ensure it bypasses "detached head" issues
-        origin.push(refspec='Head:main')
+        origin.push(refspec='HEAD:main')
         
         print("System: Mission logs successfully synced to GitHub.")
         return True
