@@ -112,7 +112,7 @@ def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
         # This uses your GitHub username and the secret token for login
-        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        repo_url = f"https://rajdaanakash:{os.environ.get('GITHUB_TOKEN')}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
         
         repo = git.Repo(BASE_DIR)
         repo.git.add(all=True)
@@ -305,12 +305,16 @@ def process_eva_command(query):
                 history = json.load(f)
             if history:
                 last_interaction = history[-1]
-                # Now it saves to the CORRECT active_mission
-                archive_groq_response(last_interaction['user'], last_interaction['eva'])
-                response_text += f"Interaction archived in the {active_mission} sector. "
-                command_handled = True 
-                return response_text
-                # Note: We do NOT return here, allowing questions to be processed
+                # 1. Save the file locally on the Render server
+                file_path = archive_groq_response(last_interaction['user'], last_interaction['eva'])
+                
+                # 2. TRIGGER THE GITHUB PUSH
+                sync_success = push_to_github() 
+                
+                if sync_success:
+                    return f"Interaction archived in the {active_mission} sector and synced to GitHub, Sir."
+                else:
+                    return f"Archived locally, but GitHub sync failed. Check Render logs."
 
     # --- ENHANCED SCRAPING TRIGGER ---
     if "scrape" in query or "read the page" in query:
