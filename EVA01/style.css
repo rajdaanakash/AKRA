@@ -1,0 +1,412 @@
+body {
+    background: #121212;
+    color: white;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+}
+
+#io-panel {
+    display: flex;
+
+}
+
+#eva-orb {
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, #00d4ff, #004e92);
+    border-radius: 50%;
+    box-shadow: 0 0 50px #00d4ff;
+    transition: 0.3s;
+    cursor: pointer;
+    display: flex;
+
+}
+
+.listening {
+    transform: scale(1.2);
+    box-shadow: 0 0 80px #00d4ff;
+    animation: pulse 1.5s infinite;
+    display: flex;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+#transcript {
+    margin-top: 30px;
+    font-size: 1.2rem;
+    color: #ccc;
+    text-align: center;
+    max-width: 80%;
+}
+
+.input-container {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+#userPrompt {
+    width: 80%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #00d2ff;
+    background: #1a1a1a;
+    color: white;
+}
+
+button {
+    padding: 10px 20px;
+    background: #00d2ff;
+    color: black;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.stop-btn {
+    padding: 10px 20px;
+    background: #ff4b2b;
+    /* Bright Red */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 10px;
+    transition: 0.3s;
+}
+
+.stop-btn:hover {
+    background: #ff416c;
+    box-shadow: 0 0 10px #ff4b2b;
+}
+
+/* --- Navigation Bar Layout --- */
+/* --- Global Reset & Background --- */
+body {
+    background-color: #050505;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+/* --- Sleek Navbar --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background: rgba(10, 10, 20, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0, 210, 255, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #00d2ff;
+    text-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+    letter-spacing: 3px;
+}
+
+.nav-links a {
+    color: #aaa;
+    text-decoration: none;
+    margin-left: 25px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: #00d2ff;
+    text-shadow: 0 0 10px #00d2ff;
+}
+
+/* --- Clean Dashboard Layout --- */
+.page-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+}
+
+/* --- The Orb --- */
+#eva-orb {
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, #00d2ff 0%, #004e92 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(0, 210, 255, 0.4);
+    cursor: pointer;
+    transition: 0.5s;
+    margin-bottom: 20px;
+}
+
+#eva-orb.listening {
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 60px #00d2ff;
+}
+
+/* --- High-Tech Buttons --- */
+.shortcuts {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 30px 0;
+}
+
+button {
+    background: rgba(0, 210, 255, 0.1);
+    border: 1px solid #00d2ff;
+    color: #00d2ff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #00d2ff;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+}
+
+.stop-btn {
+    border-color: #ff4b2b;
+    color: #030303;
+}
+
+.stop-btn:hover {
+    background: #ff4b2b;
+}
+
+/* --- Custom Input Field --- */
+.input-container {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    gap: 10px;
+}
+
+input[type="text"] {
+    flex-grow: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #444;
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    outline: none;
+}
+
+input[type="text"]:focus {
+    border-color: #00d2ff;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* --- Neon Log Divider --- */
+.log-divider {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 210, 255, 0), rgba(0, 210, 255, 0.75), rgba(0, 210, 255, 0));
+    margin: 20px 0;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+}
+
+.log-item {
+    padding: 15px;
+    border: none;
+    /* Remove old borders to use the new divider */
+}
+
+.log-time {
+    color: #00d2ff;
+    font-weight: bold;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* --- Fix the Log Container --- */
+.log-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 75vh;
+    width: 90%;
+    /* Keeps it from hitting the screen edges */
+    max-width: 900px;
+    /* Standard reading width */
+    margin: 0 auto;
+    /* Centers the box */
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* Prevents horizontal scrolling of the whole page */
+    border: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+/* --- Force Text Wrapping --- */
+.log-item {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    /* Preserves code spacing but wraps lines */
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+/* --- Style Code Blocks for CS Students --- */
+pre,
+code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 5px;
+    display: block;
+    overflow-x: auto;
+    /* Allows only the code block to scroll horizontally */
+    max-width: 100%;
+}
+
+/* --- Compact Dashboard Layout --- */
+.page-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    /* Reduced padding to save space */
+    height: calc(100vh - 80px);
+    /* Fits exactly within the viewport */
+    overflow: hidden;
+}
+
+/* --- Hardware Routing Panel --- */
+/* ... (Keep your reset and navbar) */
+
+/* --- HIGHLIGHTED CHANGE: COMPACT IO PANEL --- */
+.io-panel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 8px 15px;
+    border-radius: 30px;
+    /* Pill shape */
+    margin: 10px auto;
+    border: 1px solid rgba(0, 210, 255, 0.1);
+    font-size: 0.8rem;
+    width: fit-content;
+}
+
+.io-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.io-group select {
+    background: #1a1a1a;
+    color: #00d2ff;
+    border: 1px solid #333;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* --- HIGHLIGHTED CHANGE: ORB SCALING --- */
+#eva-orb {
+    width: 140px;
+    /* Reduced slightly to save vertical space */
+    height: 140px;
+    margin: 10px auto;
+    /* ... rest of your orb styles ... */
+}
+
+/* --- HIGHLIGHTED CHANGE: SCROLL FIX --- */
+.page-section {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* --- Permanent Notes Container --- */
+#notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    /* Space between notes */
+}
+
+/* --- Note Item Styling (Matches Mission Logs) --- */
+.note-item {
+    background: rgba(0, 210, 255, 0.03);
+    /* Subtle blue tint */
+    border-left: 3px solid #00d2ff;
+    /* Left border for a "Notebook" feel */
+    padding: 15px;
+    border-radius: 4px 10px 10px 4px;
+    transition: transform 0.2s ease;
+    word-wrap: break-word;
+    /* Prevents off-screen overflow */
+    white-space: pre-wrap;
+    /* Keeps formatting for code snippets */
+}
+
+.note-item:hover {
+    background: rgba(0, 210, 255, 0.07);
+    transform: translateX(5px);
+    /* Subtle slide effect */
+}
+
+/* --- Timestamp Styling --- */
+.note-item small {
+    color: #00d2ff;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+/* --- Notes Content Text --- */
+.note-content {
+    color: #e0e0e0;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}

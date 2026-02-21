@@ -1,0 +1,15 @@
+MISSION: BOLLYWOOD_INFO
+USER QUERY: Tell me about salman khan
+------------------------------
+EVA RESPONSE:
+Salman Khan is a highly acclaimed Indian film actor, producer, and television personality. He is one of the most popular and successful actors in Bollywood, with a career spanning over three decades.
+
+Born on December 27, 1965, Salman Khan is the son of screenwriter Salim Khan. He made his acting debut with the film "Biwi Ho To Aisi" in 1988, but it was his role in the 1989 film "Maine Pyar Kiya" that brought him widespread recognition.
+
+Some of his most notable films include "Hum Aapke Hain Koun..!", "Karishma Kudrat Kaa", "Sajan", "Judwaa", "Pyar Kiya To Darna Kya", "Hum Saath-Saath Hain", "Tere Naam", "No Entry", "Partner", "Wanted", "Dabangg", "Bodyguard", "Ek Tha Tiger", "Bajrangi Bhaijaan", "Sultan", and "Tiger Zinda Hai".
+
+Salman Khan is known for his charismatic on-screen presence, distinctive voice, and versatility as an actor. He has won numerous awards, including several Filmfare Awards, and has been nominated for many more.
+
+In addition to his acting career, Salman Khan is also a successful producer and has produced several films under his production company, Salman Khan Films. He is also known for his philanthropic work, particularly through his charitable organization, the Being Human Foundation.
+
+Overall, Salman Khan is a beloved and respected figure in Indian cinema, with a massive fan following and a reputation for delivering blockbuster hits.

@@ -1,0 +1,47 @@
+MISSION: FOR_CPP
+USER QUERY: Class in cpp
+------------------------------
+EVA RESPONSE:
+In C++, a class is a blueprint or a template that defines the properties and behavior of an object. It is a fundamental concept in object-oriented programming (OOP) and is used to create custom data types.
+
+A class in C++ typically consists of:
+
+1. **Data members** (also known as attributes or properties): These are the variables that are defined inside the class and are used to store data.
+2. **Member functions** (also known as methods): These are the functions that are defined inside the class and are used to perform operations on the data members.
+
+A class in C++ is defined using the `class` keyword followed by the name of the class and a set of curly brackets `{}` that contain the class definition.
+
+Here is an example of a simple class in C++:
+```
+class Student {
+  private:
+    int rollNo;
+    string name;
+
+  public:
+    void setRollNo(int roll) {
+      rollNo = roll;
+    }
+
+    void setName(string nam) {
+      name = nam;
+    }
+
+    void display() {
+      cout << "Roll No: " << rollNo << endl;
+      cout << "Name: " << name << endl;
+    }
+};
+```
+In this example, the `Student` class has two private data members `rollNo` and `name`, and three public member functions `setRollNo`, `setName`, and `display`.
+
+To create an object of the `Student` class, you can use the following syntax:
+```
+Student obj;
+obj.setRollNo(12);
+obj.setName("John");
+obj.display();
+```
+This will create an object `obj` of the `Student` class and call the `setRollNo`, `setName`, and `display` member functions on it.
+
+I hope this helps! Let me know if you have any further questions.
