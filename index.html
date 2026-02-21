@@ -16,6 +16,14 @@
             <a href="#" onclick="showSection('notes')">Permanent Notes</a>
         </div>
     </nav>
+    <div id="lock-screen"
+        style="position:fixed; inset:0; background:black; color:cyan; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <h2>EVA SECURITY PROTOCOL</h2>
+        <p>Enter Authorization PIN:</p>
+        <input type="password" id="pin-input"
+            style="background:#111; color:cyan; border:1px solid cyan; padding:10px; text-align:center;">
+        <button onclick="verifyPin()" style="margin-top:10px; padding:10px 20px; cursor:pointer;">ACCESS</button>
+    </div>
     <div class="io-panel">
         <h3>Hardware Routing</h3>
         <div class="io-group">
@@ -76,6 +84,17 @@
     </div>
 
     <script>
+        function verifyPin() {
+            const pin = document.getElementById('pin-input').value;
+            const SECRET_PIN = "2255"; // Set your 4-digit PIN here
+
+            if (pin === SECRET_PIN) {
+                document.getElementById('lock-screen').style.display = 'none';
+                alert("Welcome back, Sir. Systems Online.");
+            } else {
+                alert("Unauthorized Access. Connection Terminated.");
+            }
+        }
         // --- Navigation Logic ---
         function showSection(sectionId) {
             document.querySelectorAll('.page-section').forEach(s => s.style.display = 'none');
