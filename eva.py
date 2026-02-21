@@ -1,5 +1,5 @@
 import speech_recognition as sr
-import pyttsx3
+# import pyttsx3
 import datetime
 import webbrowser
 import os
@@ -165,10 +165,10 @@ def web_search(query):
         print(f"Search Error: {e}")
     return "No live data found, Sir."
 
-engine = pyttsx3.init('sapi5')
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id) 
-engine.setProperty('rate', 185) 
+# engine = pyttsx3.init('sapi5')
+# voices = engine.getProperty('voices')
+# engine.setProperty('voice', voices[1].id) 
+# engine.setProperty('rate', 185) 
 
 app = Flask(__name__, static_url_path='', static_folder='.')
 CORS(app)
@@ -177,19 +177,19 @@ CORS(app)
 
 def speak(text):
     print(f"EVA: {text}")
-    try:
-        # Create a local engine instance to avoid threading issues
-        local_engine = pyttsx3.init()
-        voices = local_engine.getProperty('voices')
-        local_engine.setProperty('voice', voices[1].id)
-        local_engine.setProperty('rate', 185)
+    # try:
+    #     # Create a local engine instance to avoid threading issues
+    #     local_engine = pyttsx3.init()
+    #     voices = local_engine.getProperty('voices')
+    #     local_engine.setProperty('voice', voices[1].id)
+    #     local_engine.setProperty('rate', 185)
         
-        local_engine.say(text)
-        local_engine.runAndWait()
-        local_engine.stop() # Clean up the engine after speaking
-        del local_engine
-    except Exception as e:
-        print(f"Voice Error: {e}")
+    #     local_engine.say(text)
+    #     local_engine.runAndWait()
+    #     local_engine.stop() # Clean up the engine after speaking
+    #     del local_engine
+    # except Exception as e:
+    #     print(f"Voice Error: {e}")
 
 def log_task(query, response):  
     try:
@@ -351,69 +351,69 @@ def process_eva_command(query):
             return f"Search encountered an error, Sir."
 
     # 3. AUTOMATION (Improved Stability)
-    if "screenshot" in query:
-        try:
-            pyautogui.screenshot("eva_snap.png")
-            response_text = "Screenshot captured and saved."
-        except Exception as e:
-            response_text = "Sir, I couldn't capture the screen. Check folder permissions."
-        command_handled = True
-        return response_text
+    # if "screenshot" in query:
+    #     try:
+    #         pyautogui.screenshot("eva_snap.png")
+    #         response_text = "Screenshot captured and saved."
+    #     except Exception as e:
+    #         response_text = "Sir, I couldn't capture the screen. Check folder permissions."
+    #     command_handled = True
+    #     return response_text
     
-    if "mute" in query:
-        pyautogui.press("volumemute")
-        response_text = "System volume toggled."
-        command_handled = True
+    # if "mute" in query:
+    #     pyautogui.press("volumemute")
+    #     response_text = "System volume toggled."
+    #     command_handled = True
 
-    # 4. OS TASKS
-    if "lock the system" in query:
-        response_text = "Locking the workstation."
-        os.system("shutdown /l")
-        command_handled = True
+    # # 4. OS TASKS
+    # if "lock the system" in query:
+    #     response_text = "Locking the workstation."
+    #     os.system("shutdown /l")
+    #     command_handled = True
 
-    if "minimize" in query or "go to desktop" in query:
-        pyautogui.hotkey('win', 'd') #
-        return "Clearing the workspace, Sir."
+    # if "minimize" in query or "go to desktop" in query:
+    #     pyautogui.hotkey('win', 'd') #
+    #     return "Clearing the workspace, Sir."
 
-    if "close this" in query or "close window" in query:
-        pyautogui.hotkey('alt', 'f4') #
-        return "Terminating active window."
+    # if "close this" in query or "close window" in query:
+    #     pyautogui.hotkey('alt', 'f4') #
+    #     return "Terminating active window."
     
-    if "system" in query or "launch" in query or"run" in query:
-        # 1. LIVE SEARCH: Get the most updated 2026 command first
-        search_query = f"modern Windows 11 CMD command for {query} 2026"
-        raw_web_data = web_search(search_query) # This uses your DDGS live search
+    # if "system" in query or "launch" in query or"run" in query:
+    #     # 1. LIVE SEARCH: Get the most updated 2026 command first
+    #     search_query = f"modern Windows 11 CMD command for {query} 2026"
+    #     raw_web_data = web_search(search_query) # This uses your DDGS live search
 
-        # 2. AI CLEANUP: Use Groq only to format the live data
-        prompt = (f"The user wants to: {query}. Based on this 2026 web data: {raw_web_data}, "
-                  "extract ONLY the specific CMD command. Return nothing but the command.")
-        raw_cmd = get_ai_response(prompt).strip()
+    #     # 2. AI CLEANUP: Use Groq only to format the live data
+    #     prompt = (f"The user wants to: {query}. Based on this 2026 web data: {raw_web_data}, "
+    #               "extract ONLY the specific CMD command. Return nothing but the command.")
+    #     raw_cmd = get_ai_response(prompt).strip()
         
-        # 3. SAFETY CHECK: Same as before
-        critical_cmds = ["shutdown", "restart", "del", "rmdir", "format"]
-        if any(c in raw_cmd.lower() for c in critical_cmds):
-            # Remember: This speaks to your phone if in Phone Mode!
-            speak(f"Sir, that is a critical command: {raw_cmd}. Confirm execution?")
-            confirm = listen().lower()
-            if "yes" not in confirm: return "Security abort."
+    #     # 3. SAFETY CHECK: Same as before
+    #     critical_cmds = ["shutdown", "restart", "del", "rmdir", "format"]
+    #     if any(c in raw_cmd.lower() for c in critical_cmds):
+    #         # Remember: This speaks to your phone if in Phone Mode!
+    #         speak(f"Sir, that is a critical command: {raw_cmd}. Confirm execution?")
+    #         confirm = listen().lower()
+    #         if "yes" not in confirm: return "Security abort."
 
-        # 4. SECURE EXECUTION: Optimized for Windows 11 Apps & Folders
-        try:
-            # Check if raw_cmd is actually a path to one of your project folders
-            # We check the 'history/ai_responses' sector specifically
-            potential_path = os.path.join(HISTORY_DIR, raw_cmd)
+    #     # 4. SECURE EXECUTION: Optimized for Windows 11 Apps & Folders
+    #     try:
+    #         # Check if raw_cmd is actually a path to one of your project folders
+    #         # We check the 'history/ai_responses' sector specifically
+    #         potential_path = os.path.join(HISTORY_DIR, raw_cmd)
             
-            if os.path.isdir(potential_path):
-                # If it's a folder, we MUST use 'explorer' to open it
-                subprocess.Popen(f'explorer "{potential_path}"', shell=True)
-                return f"Opening your {raw_cmd} directory, Sir."
-            else:
-                # If it's a standard command like 'taskmgr', run it normally
-                subprocess.Popen(raw_cmd, shell=True)
-                return f"Task initiated with verified 2026 data: {raw_cmd}"
+    #         if os.path.isdir(potential_path):
+    #             # If it's a folder, we MUST use 'explorer' to open it
+    #             subprocess.Popen(f'explorer "{potential_path}"', shell=True)
+    #             return f"Opening your {raw_cmd} directory, Sir."
+    #         else:
+    #             # If it's a standard command like 'taskmgr', run it normally
+    #             subprocess.Popen(raw_cmd, shell=True)
+    #             return f"Task initiated with verified 2026 data: {raw_cmd}"
                 
-        except Exception as e:
-            return f"I encountered an error launching that, Sir. Error: {e}"
+    #     except Exception as e:
+    #         return f"I encountered an error launching that, Sir. Error: {e}"
 
     # 5. HISTORY REVIEW
     if "show history" in query or "tasks i performed" in query:
@@ -527,14 +527,16 @@ def run_shortcut():
 
 @app.route('/stop-eva', methods=['POST'])
 def stop_eva():
-    try:
-        # We initialize a quick engine and tell it to stop any active loops
-        stop_engine = pyttsx3.init()
-        stop_engine.stop()
-        print("EVA: Speech interrupted by User.")
-        return jsonify({"status": "stopped", "response": "Speech stopped, Sir."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+    # try:
+    #     # We initialize a quick engine and tell it to stop any active loops
+    #     stop_engine = pyttsx3.init()
+    #     stop_engine.stop()
+    #     print("EVA: Speech interrupted by User.")
+    #     return jsonify({"status": "stopped", "response": "Speech stopped, Sir."})
+    # except Exception as e:
+    #     return jsonify({"status": "error", "message": str(e)})
+    print("EVA: System Silenced by User.")
+    return jsonify({"status": "stopped", "response": "System Silenced, Sir."})
 # Default mood
 current_mood = "Professional" 
 
