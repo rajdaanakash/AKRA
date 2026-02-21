@@ -9,7 +9,7 @@ from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from groq import Groq 
 from datetime import datetime
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 import requests
 import subprocess
 import shlex
