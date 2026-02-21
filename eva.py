@@ -337,7 +337,9 @@ def process_eva_command(query):
         search_query = query
         
         raw_data = web_search(search_query)
-        prompt = f"The user asked about '{search_query}'. Here is live data from the web: {raw_data}. Summarize this for the user."
+        prompt = (f"The user asked: '{search_query}'. Here is live data from the web: {raw_data}. "
+          "If the data contains irrelevant information (like unit converters or ads), "
+          "ignore it and only provide a clear biography or answer to the user's question.")
         response_text = get_ai_response(prompt)
         
         # --- HIGHLIGHTED FIX: ADD THIS LINE TO ARCHIVE THE SEARCH ---
