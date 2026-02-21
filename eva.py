@@ -117,7 +117,7 @@ def push_to_github():
         # --- CRITICAL FIX: Tell the cloud who you are ---
         with repo.config_writer() as cw:
             cw.set_value("user", "name", "rajdaanakash")
-            cw.set_value("user", "email", "rajdaanakash@gmail.com") # Your Microsoft email
+            cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
         repo.git.add(all=True)
         repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -126,7 +126,7 @@ def push_to_github():
         origin.set_url(repo_url)
         
         # Force push to ensure it bypasses "detached head" issues
-        origin.push(refspec='main:main')
+        origin.push(refspec='Head:main')
         
         print("System: Mission logs successfully synced to GitHub.")
         return True
