@@ -1,0 +1,243 @@
+MISSION: FOR_CPP
+USER QUERY: Write a menu driven program to perform string manipulation (without using inbuilt string  functions): a. Show address of each character in string b. Concatenate two strings. c. Compare two strings d. Calculate length of the string (use pointers) e. Convert all lowercase characters to uppercase f. Reverse the string g. Insert a string in another string at a user specified position in cpp
+------------------------------
+EVA RESPONSE:
+Here is a menu-driven C++ program that performs various string manipulation operations without using inbuilt string functions:
+
+```cpp
+#include <iostream>
+
+// Function to show the address of each character in a string
+void showAddress(char* str) {
+    char* ptr = str;
+    int i = 0;
+    while (*ptr != '\0') {
+        std::cout << "Address of character " << i << ": " << (void*)ptr << std::endl;
+        std::cout << "Value: " << *ptr << std::endl;
+        ptr++;
+        i++;
+    }
+}
+
+// Function to concatenate two strings
+void concatenate(char* str1, char* str2, char* result) {
+    char* ptr1 = str1;
+    char* ptr2 = str2;
+    char* ptrResult = result;
+
+    while (*ptr1 != '\0') {
+        *ptrResult = *ptr1;
+        ptr1++;
+        ptrResult++;
+    }
+
+    while (*ptr2 != '\0') {
+        *ptrResult = *ptr2;
+        ptr2++;
+        ptrResult++;
+    }
+
+    *ptrResult = '\0';
+}
+
+// Function to compare two strings
+int compare(char* str1, char* str2) {
+    char* ptr1 = str1;
+    char* ptr2 = str2;
+
+    while (*ptr1 != '\0' && *ptr2 != '\0') {
+        if (*ptr1 < *ptr2) {
+            return -1;
+        } else if (*ptr1 > *ptr2) {
+            return 1;
+        }
+        ptr1++;
+        ptr2++;
+    }
+
+    if (*ptr1 == '\0' && *ptr2 != '\0') {
+        return -1;
+    } else if (*ptr1 != '\0' && *ptr2 == '\0') {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+// Function to calculate the length of a string using pointers
+int length(char* str) {
+    int len = 0;
+    char* ptr = str;
+    while (*ptr != '\0') {
+        len++;
+        ptr++;
+    }
+    return len;
+}
+
+// Function to convert all lowercase characters to uppercase
+void toUppercase(char* str) {
+    char* ptr = str;
+    while (*ptr != '\0') {
+        if (*ptr >= 'a' && *ptr <= 'z') {
+            *ptr -= 32;
+        }
+        ptr++;
+    }
+}
+
+// Function to reverse a string
+void reverse(char* str) {
+    int len = length(str);
+    char* ptr1 = str;
+    char* ptr2 = str + len - 1;
+    char temp;
+
+    while (ptr1 < ptr2) {
+        temp = *ptr1;
+        *ptr1 = *ptr2;
+        *ptr2 = temp;
+        ptr1++;
+        ptr2--;
+    }
+}
+
+// Function to insert a string into another string at a specified position
+void insert(char* str1, char* str2, int pos) {
+    int len1 = length(str1);
+    int len2 = length(str2);
+
+    // Create a temporary array to hold the result
+    char temp[100];
+
+    // Copy the first part of str1 into temp
+    char* ptr1 = str1;
+    char* ptrTemp = temp;
+    for (int i = 0; i < pos; i++) {
+        *ptrTemp = *ptr1;
+        ptr1++;
+        ptrTemp++;
+    }
+
+    // Copy str2 into temp
+    char* ptr2 = str2;
+    while (*ptr2 != '\0') {
+        *ptrTemp = *ptr2;
+        ptr2++;
+        ptrTemp++;
+    }
+
+    // Copy the remaining part of str1 into temp
+    while (*ptr1 != '\0') {
+        *ptrTemp = *ptr1;
+        ptr1++;
+        ptrTemp++;
+    }
+
+    // Copy temp back into str1
+    ptrTemp = temp;
+    ptr1 = str1;
+    while (*ptrTemp != '\0') {
+        *ptr1 = *ptrTemp;
+        ptrTemp++;
+        ptr1++;
+    }
+
+    // Add the null terminator
+    *ptr1 = '\0';
+}
+
+int main() {
+    char str1[100], str2[100], result[200];
+    int choice, pos;
+
+    while (1) {
+        std::cout << "1. Show address of each character in a string" << std::endl;
+        std::cout << "2. Concatenate two strings" << std::endl;
+        std::cout << "3. Compare two strings" << std::endl;
+        std::cout << "4. Calculate length of a string" << std::endl;
+        std::cout << "5. Convert all lowercase characters to uppercase" << std::endl;
+        std::cout << "6. Reverse a string" << std::endl;
+        std::cout << "7. Insert a string into another string" << std::endl;
+        std::cout << "8. Exit" << std::endl;
+
+        std::cout << "Enter your choice: ";
+        std::cin >> choice;
+
+        switch (choice) {
+            case 1:
+                std::cout << "Enter a string: ";
+                std::cin >> str1;
+                showAddress(str1);
+                break;
+
+            case 2:
+                std::cout << "Enter first string: ";
+                std::cin >> str1;
+                std::cout << "Enter second string: ";
+                std::cin >> str2;
+                concatenate(str1, str2, result);
+                std::cout << "Concatenated string: " << result << std::endl;
+                break;
+
+            case 3:
+                std::cout << "Enter first string: ";
+                std::cin >> str1;
+                std::cout << "Enter second string: ";
+                std::cin >> str2;
+                int comparison = compare(str1, str2);
+                if (comparison < 0) {
+                    std::cout << "First string is lexicographically smaller" << std::endl;
+                } else if (comparison > 0) {
+                    std::cout << "Second string is lexicographically smaller" << std::endl;
+                } else {
+                    std::cout << "Both strings are equal" << std::endl;
+                }
+                break;
+
+            case 4:
+                std::cout << "Enter a string: ";
+                std::cin >> str1;
+                std::cout << "Length of the string: " << length(str1) << std::endl;
+                break;
+
+            case 5:
+                std::cout << "Enter a string: ";
+                std::cin >> str1;
+                toUppercase(str1);
+                std::cout << "Uppercase string: " << str1 << std::endl;
+                break;
+
+            case 6:
+                std::cout << "Enter a string: ";
+                std::cin >> str1;
+                reverse(str1);
+                std::cout << "Reversed string: " << str1 << std::endl;
+                break;
+
+            case 7:
+                std::cout << "Enter first string: ";
+                std::cin >> str1;
+                std::cout << "Enter second string: ";
+                std::cin >> str2;
+                std::cout << "Enter position: ";
+                std::cin >> pos;
+                insert(str1, str2, pos);
+                std::cout << "Modified string: " << str1 << std::endl;
+                break;
+
+            case 8:
+                return 0;
+
+            default:
+                std::cout << "Invalid choice" << std::endl;
+        }
+
+        std::cout << std::endl;
+    }
+
+    return 0;
+}
+```
+
+This program provides a menu-driven interface for the user to choose from various string manipulation operations. It uses pointers to perform these operations without relying on inbuilt string functions. The program handles user input, performs the chosen operation, and displays the result.

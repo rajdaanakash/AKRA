@@ -1,0 +1,17 @@
+MISSION: BIOMETRIC_PAYMENT_APP
+USER QUERY: Where I have to code for this app 
+------------------------------
+EVA RESPONSE:
+For the Biometric Payment App project, you can code in various programming languages and platforms. Considering you're a BS Computer Science student at Bhaskaracharyaa College of Applied Science, Delhi University, I'll suggest a few options:
+
+1. **Android Studio**: You can develop the app for Android devices using Java or Kotlin. Android Studio provides a comprehensive development environment for building Android apps.
+2. **Visual Studio Code**: You can use VS Code for developing the app using languages like C++, Java, or Python. It's a lightweight, open-source code editor that supports a wide range of programming languages.
+3. **React Native**: If you prefer to develop a cross-platform app, you can use React Native, which allows you to build apps for both Android and iOS devices using JavaScript and React.
+
+As for the specific coding environment, you can use:
+
+* **Online IDEs**: Such as Repl.it, CodeAnywhere, or Ideone, which provide a cloud-based coding environment.
+* **Local IDEs**: Like Android Studio, Visual Studio Code, or IntelliJ IDEA, which you can install on your computer.
+* **University resources**: You may also have access to computer labs or coding environments provided by your university, such as Delhi University's computer science department.
+
+Which coding environment and platform would you like to use for your Biometric Payment App project, Sir?

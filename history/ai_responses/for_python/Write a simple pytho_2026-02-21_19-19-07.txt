@@ -1,0 +1,42 @@
+MISSION: FOR_PYTHON
+USER QUERY: Write a simple python code for sending email by using Gmail 
+------------------------------
+EVA RESPONSE:
+Here's a simple Python script that uses the smtplib library to send an email using Gmail:
+
+```python
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def send_email(subject, message, from_addr, to_addr, password):
+    msg = MIMEMultipart()
+    msg['From'] = from_addr
+    msg['To'] = to_addr
+    msg['Subject'] = subject
+
+    body = message
+    msg.attach(MIMEText(body, 'plain'))
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(from_addr, password)
+    text = msg.as_string()
+    server.sendmail(from_addr, to_addr, text)
+    server.quit()
+
+subject = "Test Email"
+message = "This is a test email sent by Python"
+from_addr = "your-email@gmail.com"
+to_addr = "recipient-email@gmail.com"
+password = "your-email-password"
+
+send_email(subject, message, from_addr, to_addr, password)
+```
+
+**Important:** 
+1. Make sure to replace "your-email@gmail.com" and "your-email-password" with your actual Gmail address and password.
+2. If you have 2-step verification enabled on your Google account, you may need to generate an App Password and use that instead of your regular password.
+3. Be cautious when storing your password in plain text, as it can be a security risk.
+
+**Note:** Google may block sign-in attempts from apps which do not use modern security standards. You may need to allow less secure apps or generate an App Password to use this script.
