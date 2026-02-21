@@ -607,7 +607,7 @@ if __name__ == "__main__":
     
     # Render will automatically give EVA a port number via an 'Environment Variable'
     # If it can't find one, it will use your default 59059
-    port = int(os.environ.get("PORT", 59059))
+    port = int(os.environ.get("PORT", 10000))
     
     print(f"EVA is now live on the cloud, Sir. Listening on port {port}...")
     
