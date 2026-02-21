@@ -4,7 +4,7 @@ import datetime
 import webbrowser
 import os
 import json
-import pyautogui 
+# import pyautogui 
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from groq import Groq 
