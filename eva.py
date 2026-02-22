@@ -171,33 +171,36 @@ def archive_groq_response(query, response):
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
         
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        
-        # --- AI-POWERED DETECTION ---
-        # Look for the markdown code block: ```language
+        # 1. EXTRACT CODE AND DETECT LANGUAGE
         match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
         
         if match:
-            # The AI has already identified the language here (e.g., 'python', 'html')
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
-            
-            # Map common names to extensions, but keep it flexible
-            ext_map = {"python": ".py", "javascript": ".js", "typescript": ".ts", "markdown": ".md"}
-            # If it's a known shorthand (like 'js'), use it; otherwise, use .[detected_lang]
+            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
+
+            # 2. ASK AI FOR A SHORT, CLEAN FILENAME
+            # Instead of using the query, we ask Groq for a 2-word name
+            name_prompt = f"Suggest a 2-word filename (no extension) for this code: {save_data[:100]}"
+            clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
+            # Remove any unwanted punctuation the AI might include
+            clean_name = re.sub(r'[^\w\s-]', '', clean_name)
         else:
             ext = ".txt"
             save_data = response
+            clean_name = "response_log"
 
-        filename = f"{query[:20].replace(' ', '_')}_{timestamp}{ext}"
+        # 3. UNIQUE FILENAME (Prevents overwriting same names)
+        timestamp = datetime.now().strftime("%H%M%S")
+        filename = f"{clean_name}_{timestamp}{ext}"
         file_path = os.path.join(mission_path, filename)
         
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(save_data)
             
         print(f"File created: {file_path}")
-        push_to_github() # Your verified sync fix
+        push_to_github() 
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
