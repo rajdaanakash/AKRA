@@ -1,5 +1,7 @@
+.venv/
 __pycache__/
-task_history.json
+*.pyc
 .env
 history/
-*.pyc
+task_history.json
+eva_notes.json

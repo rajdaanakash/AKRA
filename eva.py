@@ -598,21 +598,26 @@ def run_shortcut():
     # --- 1. ATTEMPT NEURAL BRIDGE (Laptop Power) ---
     try:
         bridge_url = "https://subumbellated-unharmfully-case.ngrok-free.dev/run-shortcut"
-        # We use a 10s timeout to detect if the laptop is offline
+        # 4s timeout is perfect for Delhi-Lucknow latency
         response = requests.post(bridge_url, json={"command": command}, timeout=4)
         return response.json()
         
     except Exception:
+        # --- 2. FALLBACK: CLOUD MODE (Render Power) ---
         print("System: Bridge offline. Running local logic on Render.")
         
+        # This handles directory creation, search, and general AI
         response_text = process_eva_command(command)
         
-        # LOGIC FIX: Only save if the command specifically asked for a save
+        # --- CRITICAL FIX: STOP AUTO-PUSH ON SEARCH ---
+        # We only call archive_groq_response if the user specifically requests a save.
+        # Searching "what is..." or "who is..." will now ONLY log to JSON history.
         if "save it" in command or "save this convo" in command:
             log_task(command, response_text)
-            archive_groq_response(command, response_text)
+            archive_groq_response(command, response_text) # This starts the Git Push
         else:
-            # For other commands like 'create directory', just log the task history
+            # For searches and directory routing, we only update the local task list.
+            # No files are created and NO GitHub push is triggered.
             log_task(command, response_text)
         
         return jsonify({
