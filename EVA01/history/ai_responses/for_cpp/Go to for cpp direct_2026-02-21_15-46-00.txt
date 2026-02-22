@@ -1,5 +1,0 @@
-MISSION: FOR_CPP
-USER QUERY: Go to for cpp directory 
-------------------------------
-EVA RESPONSE:
-None
