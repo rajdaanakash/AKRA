@@ -1,0 +1,12 @@
+[
+    {
+        "timestamp": "2026-02-22 20:29:50",
+        "user": "create new directory cpp",
+        "eva": "Project 'cpp' initialized, Sir."
+    },
+    {
+        "timestamp": "2026-02-22 20:30:18",
+        "user": "write a simple cpp program for calculator",
+        "eva": "Here's a simple C++ program for a calculator:\n\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int choice;\n    float num1, num2;\n\n    cout << \"Simple Calculator\" << endl;\n    cout << \"1. Addition\" << endl;\n    cout << \"2. Subtraction\" << endl;\n    cout << \"3. Multiplication\" << endl;\n    cout << \"4. Division\" << endl;\n\n    cout << \"Enter your choice (1/2/3/4): \";\n    cin >> choice;\n\n    cout << \"Enter first number: \";\n    cin >> num1;\n\n    cout << \"Enter second number: \";\n    cin >> num2;\n\n    switch (choice) {\n        case 1:\n            cout << num1 << \" + \" << num2 << \" = \" << num1 + num2 << endl;\n            break;\n        case 2:\n            cout << num1 << \" - \" << num2 << \" = \" << num1 - num2 << endl;\n            break;\n        case 3:\n            cout << num1 << \" * \" << num2 << \" = \" << num1 * num2 << endl;\n            break;\n        case 4:\n            if (num2 != 0) {\n                cout << num1 << \" / \" << num2 << \" = \" << num1 / num2 << endl;\n            } else {\n                cout << \"Error: Division by zero is not allowed.\" << endl;\n            }\n            break;\n        default:\n            cout << \"Invalid choice.\" << endl;\n    }\n\n    return 0;\n}\n```\n\nThis program allows the user to choose from four basic arithmetic operations and performs the chosen operation on two input numbers. If the user chooses division and the second number is zero, it displays an error message to prevent division by zero."
+    }
+]
