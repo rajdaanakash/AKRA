@@ -138,6 +138,9 @@ def push_to_github():
             cw.set_value("user", "name", "rajdaanakash")
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
+        # Force identity every time to ensure Render has permission
+        repo.git.config('user.email', 'rajdaanakash@gmail.com')
+        repo.git.config('user.name', 'rajdaanakash')
         repo.git.add('eva.py', '.gitignore', 'eva_notes.json', 'task_history.json', 'history/*')
         # Check if there are actually changes to commit to avoid errors
         if repo.is_dirty(untracked_files=True):
@@ -151,6 +154,8 @@ def push_to_github():
                 origin = repo.create_remote('origin', repo_url)
             
             # Use 'HEAD:main' to tell Render exactly where to push
+            # Ensure we are up to date before pushing
+            repo.git.pull('origin', 'main', rebase=True)
             origin.push(refspec='HEAD:main', force=True)
             print("System: Mission logs successfully synced to GitHub.")
             return True
