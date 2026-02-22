@@ -151,6 +151,7 @@ def push_to_github():
                 origin = repo.create_remote('origin', repo_url)
             
             # Use 'HEAD:main' to tell Render exactly where to push
+            repo.git.pull('origin', 'main', rebase=True)
             origin.push(refspec='HEAD:main', force=True)
             print("System: Mission logs successfully synced to GitHub.")
             return True
