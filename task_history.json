@@ -73,5 +73,20 @@
         "timestamp": "2026-02-22 22:27:06",
         "user": "save it",
         "eva": "Archived locally, but GitHub sync failed. Check Render logs."
+    },
+    {
+        "timestamp": "2026-02-22 22:45:44",
+        "user": "go to cpp directory",
+        "eva": "Systems routed to cpp directory, Sir."
+    },
+    {
+        "timestamp": "2026-02-22 22:46:13",
+        "user": "write a cpp program for fint sqares of number",
+        "eva": "**Finding Squares of Numbers in C++**\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int num;\n    cout << \"Enter a number: \";\n    cin >> num;\n\n    // Calculate square using multiplication\n    int square = num * num;\n    cout << \"The square of \" << num << \" is: \" << square << endl;\n\n    return 0;\n}\n```\n**Explanation:**\n\n1. The program asks the user to enter a number.\n2. The entered number is stored in the `num` variable.\n3. The square of the number is calculated using the formula `num * num` and stored in the `square` variable.\n4. The result is then printed to the console.\n\n**Alternative Implementation:**\n\nYou can also use a function to calculate the square:\n```cpp\n#include <iostream>\nusing namespace std;\n\nint calculateSquare(int num) {\n    return num * num;\n}\n\nint main() {\n    int num;\n    cout << \"Enter a number: \";\n    cin >> num;\n    int square = calculateSquare(num);\n    cout << \"The square of \" << num << \" is: \" << square << endl;\n    return 0;\n}\n```\n**Compilation and Execution:**\n\nSave this code in a file with a `.cpp` extension (e.g., `square.cpp`) and compile it using a C++ compiler like `g++`:\n```bash\ng++ square.cpp -o square\n./square\n```\nEnter a number when prompted, and the program will display its square."
+    },
+    {
+        "timestamp": "2026-02-22 22:46:31",
+        "user": "save it",
+        "eva": "Archived locally, but GitHub sync failed. Check Render logs."
     }
 ]
