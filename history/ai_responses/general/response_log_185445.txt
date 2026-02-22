@@ -1,0 +1,33 @@
+You can create a new directory named "cpp" using the command line or terminal. Here are the steps for different operating systems:
+
+**Windows:**
+1. Open the Command Prompt.
+2. Navigate to the desired location where you want to create the new directory.
+3. Type the command: `mkdir cpp`
+4. Press Enter.
+
+**Mac/Linux:**
+1. Open the Terminal.
+2. Navigate to the desired location where you want to create the new directory.
+3. Type the command: `mkdir cpp`
+4. Press Enter.
+
+Alternatively, you can also create a new directory using your operating system's file explorer:
+
+**Windows:**
+1. Open File Explorer.
+2. Navigate to the desired location.
+3. Right-click and select "New" > "Folder".
+4. Name the folder "cpp".
+
+**Mac:**
+1. Open Finder.
+2. Navigate to the desired location.
+3. Right-click (or Ctrl-click) and select "New Folder".
+4. Name the folder "cpp".
+
+**Linux:**
+1. Open File Manager.
+2. Navigate to the desired location.
+3. Right-click and select "Create New" > "Folder".
+4. Name the folder "cpp".
