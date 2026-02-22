@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from waitress import serve
 import git
 import re
+import rag_engine
 
 # --- CONFIGURATION ---
 
@@ -32,23 +33,31 @@ current_key_index = 0
 def get_ai_response(prompt):
     global current_key_index
     
+    # --- NEW: RETRIEVE TEXTBOOK CONTEXT ---
+    # This searches your 6,632 chunks on your E: drive
+    local_context = rag_engine.get_relevant_context(prompt)
+    
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
     if os.path.exists(NOTES_FILE):
         with open(NOTES_FILE, "r") as f:
             notes = json.load(f)
-            for n in notes[-3:]: # Trimming for Token Budget
+            for n in notes[-3:]: 
                 permanent_notes += f"- {n['content']}\n"
 
     history_context = ""
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r") as f:
             history = json.load(f)
-            for item in history[-5:]: # Preventing 429 Errors
+            for item in history[-5:]: 
                 history_context += f"User: {item['user']}\nEVA: {item['eva']}\n"
 
-    # Define system_msg here so it exists before the loop starts
-    system_msg = f"You are EVA, created by Akash. Notes:\n{permanent_notes}\nChat:\n{history_context}"
+    # --- UPDATED SYSTEM MSG WITH RAG ---
+    # If context is found, we force EVA to use it
+    if local_context:
+        system_msg = f"You are EVA, created by Akash. Use this textbook context: {local_context}. Notes:\n{permanent_notes}\nChat:\n{history_context}"
+    else:
+        system_msg = f"You are EVA, created by Akash. Notes:\n{permanent_notes}\nChat:\n{history_context}"
 
     # --- 2. THE ROTATION LOOP ---
     for _ in range(len(API_KEYS)):
