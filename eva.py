@@ -17,7 +17,13 @@ from bs4 import BeautifulSoup
 from waitress import serve
 import git
 import re
-import rag_engine
+
+try:
+    import rag_engine
+    RAG_AVAILABLE = True
+except ImportError:
+    # If the libraries are too heavy for Render, skip them
+    RAG_AVAILABLE = False
 
 # --- CONFIGURATION ---
 
@@ -35,7 +41,12 @@ def get_ai_response(prompt):
     
     # --- NEW: RETRIEVE TEXTBOOK CONTEXT ---
     # This searches your 6,632 chunks on your E: drive
-    local_context = rag_engine.get_relevant_context(prompt)
+    local_context = ""
+    if RAG_AVAILABLE:
+        try:
+            local_context = rag_engine.get_relevant_context(prompt)
+        except:
+            pass
     
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
@@ -636,12 +647,8 @@ def startup_greeting():
 
 if __name__ == "__main__":
     startup_greeting()
-    
-    # Render will automatically give EVA a port number via an 'Environment Variable'
-    # If it can't find one, it will use your default 59059
+    # Render provides the port; we must use 0.0.0.0 to be visible externally
     port = int(os.environ.get("PORT", 10000))
-    
-    print(f"EVA is now live on the cloud, Sir. Listening on port {port}...")
-    
-    # This 'serve' function from Waitress is for Production use
+    print(f"EVA is listening on port {port}...")
+    # Use host='0.0.0.0' so Render can 'see' the app
     serve(app, host='0.0.0.0', port=port)

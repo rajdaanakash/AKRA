@@ -1,15 +1,43 @@
 body {
-    background: #121212;
-    color: white;
-    font-family: sans-serif;
+    background-color: #0b0f19;
+    /* Dark tech theme */
+    color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
-    margin: 0;
+    /* Horizontally centers the content */
+    min-height: 100vh;
+    transition: all 0.3s ease;
+    /* Smooth movement when content changes */
+    padding: 20px;
+    box-sizing: border-box;
 }
 
+#main-container {
+    width: 100%;
+    max-width: 800px;
+    /* Limits width for readability on laptop screens */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    /* This ensures the container stays in the middle 
+       but expands downwards as EVA responds */
+    margin: auto 0;
+}
+
+.orb-container {
+    margin-bottom: 20px;
+    transition: transform 0.5s ease;
+}
+@media (max-width: 600px) {
+    #main-container {
+        max-width: 95%;
+        margin-top: 20px;
+    }
+}
 #io-panel {
     display: flex;
 
