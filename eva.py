@@ -138,7 +138,7 @@ def push_to_github():
             cw.set_value("user", "name", "rajdaanakash")
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
-        repo.git.add(all=True, f=True)
+        repo.git.add('eva.py', '.gitignore', 'eva_notes.json', 'task_history.json', 'history/*')
         # Check if there are actually changes to commit to avoid errors
         if repo.is_dirty(untracked_files=True):
             repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -168,27 +168,26 @@ def archive_groq_response(query, response):
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
         
-        # 1. EXTRACT CODE AND DETECT LANGUAGE
+        # 1. DETECT CODE
         match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
         
         if match:
+            # SAVE ONLY THE CODE
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
             ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
-
-            # 2. ASK AI FOR A SHORT, CLEAN FILENAME
-            # Instead of using the query, we ask Groq for a 2-word name
+            
             name_prompt = f"Suggest a 2-word filename (no extension) for this code: {save_data[:100]}"
             clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
-            # Remove any unwanted punctuation the AI might include
             clean_name = re.sub(r'[^\w\s-]', '', clean_name)
         else:
+            # NO CODE FOUND: SAVE ONLY THE TEXT LOG
             ext = ".txt"
             save_data = response
             clean_name = "response_log"
 
-        # 3. UNIQUE FILENAME (Prevents overwriting same names)
+        # 2. CREATE THE SINGLE FILE
         timestamp = datetime.now().strftime("%H%M%S")
         filename = f"{clean_name}_{timestamp}{ext}"
         file_path = os.path.join(mission_path, filename)
@@ -199,6 +198,7 @@ def archive_groq_response(query, response):
         print(f"File created: {file_path}")
         threading.Thread(target=push_to_github).start()
         return file_path
+        
     except Exception as e:
         print(f"Archive Error: {e}")
         return None
