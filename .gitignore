@@ -1,3 +1,5 @@
 __pycache__/
 task_history.json
 .env
+history/
+*.pyc

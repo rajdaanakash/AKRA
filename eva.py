@@ -603,16 +603,17 @@ def run_shortcut():
         return response.json()
         
     except Exception:
-        # LAPTOP OFFLINE - ACTIVATE CLOUD FALLBACK
         print("System: Bridge offline. Running local logic on Render.")
         
-        # LOGIC FIX: Instead of writing new 'if' statements, 
-        # just call your existing process function!
         response_text = process_eva_command(command)
         
-        # Now Render will correctly run line 330 and update active_mission
-        log_task(command, response_text)
-        archive_groq_response(command, response_text)
+        # LOGIC FIX: Only save if the command specifically asked for a save
+        if "save it" in command or "save this convo" in command:
+            log_task(command, response_text)
+            archive_groq_response(command, response_text)
+        else:
+            # For other commands like 'create directory', just log the task history
+            log_task(command, response_text)
         
         return jsonify({
             "transcript": command,
