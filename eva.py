@@ -587,37 +587,50 @@ def index():
 
 @app.route('/run-shortcut', methods=['POST'])
 def run_shortcut():
+    global active_mission
     data = request.get_json()
-    command = data.get("command")
+    command = data.get("command", "").lower()
     
-    if command:
-        # 1. ATTEMPT NEURAL BRIDGE (Laptop Power)
-        try:
-            # Change the bridge_url to your new live link
-            bridge_url = "https://subumbellated-unharmfully-case.ngrok-free.dev/run-shortcut"
-            # We use a shorter timeout (10s) so you aren't waiting too long if it's off
-            response = requests.post(bridge_url, json={"command": command}, timeout=10)
-            return response.json()
-            
-        except Exception:
-            # 2. FALLBACK TO CLOUD BRAIN (Render Power)
-            # If the laptop is offline, EVA01 handles the chat itself
-            print("System: Bridge offline. Activating Cloud Fallback.")
-            
-            # Since Render has no OS access, we skip launch_app and go to AI
-            ai_response = get_ai_response(command) 
-            
-            # We add a small notice so you know you're in 'Lite Mode'
-            final_msg = f"(Cloud Mode) {ai_response}"
-            
-            return jsonify({
-                "transcript": command,
-                "response": final_msg,
-                "audio": "frontend" # Phone speaks
-            })
-            
-    return jsonify({"response": "No command received."})
+    if not command:
+        return jsonify({"response": "No command received."})
 
+    # --- 1. ATTEMPT NEURAL BRIDGE (Laptop Power) ---
+    try:
+        bridge_url = "https://subumbellated-unharmfully-case.ngrok-free.dev/run-shortcut"
+        # We use a 10s timeout to detect if the laptop is offline
+        response = requests.post(bridge_url, json={"command": command}, timeout=10)
+        return response.json()
+        
+    except Exception:
+        # --- 2. FALLBACK: CLOUD MODE (Render Power) ---
+        print("System: Bridge offline. Activating Cloud Storage Fallback.")
+        
+        # LOGIC: Create directory/project locally on Render if laptop is away
+        if "create new project" in command or "go to" in command:
+            new_folder = command.replace("create new project", "").replace("go to", "").replace("directory", "").strip().replace(" ", "_")
+            if new_folder:
+                active_mission = new_folder
+                # This creates the folder on Render's disk
+                set_active_project(active_mission) 
+                return jsonify({
+                    "response": f"(Cloud Mode) Laptop offline. Project '{active_mission}' created in temporary cloud storage.",
+                    "audio": "frontend"
+                })
+
+        # LOGIC: Run AI and save the response to the cloud disk
+        ai_response = get_ai_response(command)
+        
+        # Save the interaction to Render's local history folder
+        log_task(command, ai_response)
+        archive_groq_response(command, ai_response) # This creates the .txt/.py file on Render
+        
+        return jsonify({
+            "transcript": command,
+            "response": f"(Cloud Mode) {ai_response}",
+            "audio": "frontend"
+        })
+    
+    
 @app.route('/stop-eva', methods=['POST'])
 def stop_eva():
     # try:
