@@ -138,7 +138,7 @@ def push_to_github():
             cw.set_value("user", "name", "rajdaanakash")
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
-        repo.git.add(all=True)
+        repo.git.add(all=True, f=True)
         # Check if there are actually changes to commit to avoid errors
         if repo.is_dirty(untracked_files=True):
             repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
