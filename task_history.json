@@ -58,5 +58,20 @@
         "timestamp": "2026-02-22 21:18:53",
         "user": "save it",
         "eva": "Archived locally, but GitHub sync failed. Check Render logs."
+    },
+    {
+        "timestamp": "2026-02-22 22:25:55",
+        "user": "go to cpp directory",
+        "eva": "Systems routed to cpp directory, Sir."
+    },
+    {
+        "timestamp": "2026-02-22 22:26:47",
+        "user": "write a simple cpp code for get square of a number",
+        "eva": "**Calculating the Square of a Number in C++**\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    double num;\n    cout << \"Enter a number: \";\n    cin >> num;\n    double square = num * num;\n    cout << \"The square of \" << num << \" is: \" << square << endl;\n    return 0;\n}\n```\nYou can also write a function to calculate the square:\n```cpp\n#include <iostream>\nusing namespace std;\n\ndouble calculateSquare(double num) {\n    return num * num;\n}\n\nint main() {\n    double num;\n    cout << \"Enter a number: \";\n    cin >> num;\n    double square = calculateSquare(num);\n    cout << \"The square of \" << num << \" is: \" << square << endl;\n    return 0;\n}\n```\nTo compile and run this code, save it in a file with a `.cpp` extension (e.g., `square.cpp`) and use a C++ compiler like `g++`:\n```bash\ng++ square.cpp -o square\n./square\n```"
+    },
+    {
+        "timestamp": "2026-02-22 22:27:06",
+        "user": "save it",
+        "eva": "Archived locally, but GitHub sync failed. Check Render logs."
     }
 ]
