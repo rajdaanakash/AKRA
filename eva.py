@@ -16,6 +16,7 @@ import shlex
 from bs4 import BeautifulSoup
 from waitress import serve
 import git
+import re
 
 # --- CONFIGURATION ---
 
@@ -145,26 +146,38 @@ def push_to_github():
         return False
 
 def archive_groq_response(query, response):
-    """Saves Groq AI responses into a specific mission directory."""
     try:
-        # --- HIGHLIGHTED CHANGE: ROUTE TO MISSION FOLDER ---
         mission_path = os.path.join(HISTORY_DIR, active_mission)
-        
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
         
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"{query[:20]}_{timestamp}.txt" 
+        
+        # --- AI-POWERED DETECTION ---
+        # Look for the markdown code block: ```language
+        match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
+        
+        if match:
+            # The AI has already identified the language here (e.g., 'python', 'html')
+            detected_lang = match.group(1).lower()
+            save_data = match.group(2)
+            
+            # Map common names to extensions, but keep it flexible
+            ext_map = {"python": ".py", "javascript": ".js", "typescript": ".ts", "markdown": ".md"}
+            # If it's a known shorthand (like 'js'), use it; otherwise, use .[detected_lang]
+            ext = ext_map.get(detected_lang, f".{detected_lang}")
+        else:
+            ext = ".txt"
+            save_data = response
+
+        filename = f"{query[:20].replace(' ', '_')}_{timestamp}{ext}"
         file_path = os.path.join(mission_path, filename)
         
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(f"MISSION: {active_mission.upper()}\n")
-            f.write(f"USER QUERY: {query}\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"EVA RESPONSE:\n{response}\n")
+            f.write(save_data)
             
-        print(f"Interaction archived in: {file_path}")
-        push_to_github()
+        print(f"File created: {file_path}")
+        push_to_github() # Your verified sync fix
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
