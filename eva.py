@@ -42,11 +42,7 @@ def get_ai_response(prompt):
     # --- NEW: RETRIEVE TEXTBOOK CONTEXT ---
     # This searches your 6,632 chunks on your E: drive
     local_context = ""
-    if RAG_AVAILABLE:
-        try:
-            local_context = rag_engine.get_relevant_context(prompt)
-        except:
-            pass
+    
     
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
@@ -593,16 +589,32 @@ def index():
 def run_shortcut():
     data = request.get_json()
     command = data.get("command")
+    
     if command:
-        response_text = process_eva_command(command)
-        log_task(command, response_text) # Ensure it still logs!
-
-        # --- HIGHLIGHTED FIX: ADD SPEAKER CHECK HERE ---
-        if io_config["speaker"] == "Backend":
-            speak(response_text) # Laptop speaks
-            return jsonify({"transcript": "Shortcut", "response": response_text, "audio": "backend"})
-        else:
-            return jsonify({"transcript": "Shortcut", "response": response_text, "audio": "frontend"})
+        # 1. ATTEMPT NEURAL BRIDGE (Laptop Power)
+        try:
+            # Change the bridge_url to your new live link
+            bridge_url = "https://subumbellated-unharmfully-case.ngrok-free.dev/run-shortcut"
+            # We use a shorter timeout (10s) so you aren't waiting too long if it's off
+            response = requests.post(bridge_url, json={"command": command}, timeout=10)
+            return response.json()
+            
+        except Exception:
+            # 2. FALLBACK TO CLOUD BRAIN (Render Power)
+            # If the laptop is offline, EVA01 handles the chat itself
+            print("System: Bridge offline. Activating Cloud Fallback.")
+            
+            # Since Render has no OS access, we skip launch_app and go to AI
+            ai_response = get_ai_response(command) 
+            
+            # We add a small notice so you know you're in 'Lite Mode'
+            final_msg = f"(Cloud Mode) {ai_response}"
+            
+            return jsonify({
+                "transcript": command,
+                "response": final_msg,
+                "audio": "frontend" # Phone speaks
+            })
             
     return jsonify({"response": "No command received."})
 
