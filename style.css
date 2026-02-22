@@ -1,20 +1,3 @@
-body {
-    background-color: #0b0f19;
-    /* Dark tech theme */
-    color: #ffffff;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Horizontally centers the content */
-    min-height: 100vh;
-    transition: all 0.3s ease;
-    /* Smooth movement when content changes */
-    padding: 20px;
-    box-sizing: border-box;
-}
-
 #main-container {
     width: 100%;
     max-width: 800px;
@@ -32,12 +15,14 @@ body {
     margin-bottom: 20px;
     transition: transform 0.5s ease;
 }
+
 @media (max-width: 600px) {
     #main-container {
         max-width: 95%;
         margin-top: 20px;
     }
 }
+
 #io-panel {
     display: flex;
 
@@ -180,7 +165,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 20px;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    /* Changed from fixed height */
+    overflow-y: visible;
+    /* Let the body handle the main scroll */
 }
 
 /* --- The Orb --- */
@@ -295,17 +284,11 @@ input[type="text"]:focus {
 .log-container {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
-    padding: 20px;
-    max-height: 75vh;
-    width: 90%;
-    /* Keeps it from hitting the screen edges */
+    padding: 20px 20px 80px 20px;
+    /* Added bottom padding */
+    width: 95%;
     max-width: 900px;
-    /* Standard reading width */
-    margin: 0 auto;
-    /* Centers the box */
-    overflow-y: auto;
-    overflow-x: hidden;
-    /* Prevents horizontal scrolling of the whole page */
+    margin: 20px auto;
     border: 1px solid rgba(0, 210, 255, 0.2);
 }
 
@@ -322,26 +305,17 @@ input[type="text"]:focus {
 /* --- Style Code Blocks for CS Students --- */
 pre,
 code {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 10px;
-    border-radius: 5px;
-    display: block;
+    background: #000000;
+    border: 1px solid #333;
+    padding: 15px;
+    border-radius: 8px;
+    color: #00d2ff;
+    /* Neon blue text for code */
+    font-family: 'Consolas', monospace;
     overflow-x: auto;
-    /* Allows only the code block to scroll horizontally */
-    max-width: 100%;
 }
 
 /* --- Compact Dashboard Layout --- */
-.page-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    /* Reduced padding to save space */
-    height: calc(100vh - 80px);
-    /* Fits exactly within the viewport */
-    overflow: hidden;
-}
 
 /* --- Hardware Routing Panel --- */
 /* ... (Keep your reset and navbar) */
@@ -384,13 +358,6 @@ code {
     height: 140px;
     margin: 10px auto;
     /* ... rest of your orb styles ... */
-}
-
-/* --- HIGHLIGHTED CHANGE: SCROLL FIX --- */
-.page-section {
-    max-height: calc(100vh - 120px);
-    overflow-y: auto;
-    padding: 20px;
 }
 
 /* --- Permanent Notes Container --- */

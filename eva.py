@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from waitress import serve
 import git
 import re
+import threading
 
 try:
     import rag_engine
@@ -196,7 +197,7 @@ def archive_groq_response(query, response):
             f.write(save_data)
             
         print(f"File created: {file_path}")
-        push_to_github() 
+        threading.Thread(target=push_to_github).start()
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
@@ -583,7 +584,7 @@ def index():
     except Exception:
         return "Error: index.html not found, Sir."
 
-@app.route('/run-eva', methods=['POST'])
+
 
 @app.route('/run-shortcut', methods=['POST'])
 def run_shortcut():
@@ -598,39 +599,28 @@ def run_shortcut():
     try:
         bridge_url = "https://subumbellated-unharmfully-case.ngrok-free.dev/run-shortcut"
         # We use a 10s timeout to detect if the laptop is offline
-        response = requests.post(bridge_url, json={"command": command}, timeout=10)
+        response = requests.post(bridge_url, json={"command": command}, timeout=4)
         return response.json()
         
     except Exception:
-        # --- 2. FALLBACK: CLOUD MODE (Render Power) ---
-        print("System: Bridge offline. Activating Cloud Storage Fallback.")
+        # LAPTOP OFFLINE - ACTIVATE CLOUD FALLBACK
+        print("System: Bridge offline. Running local logic on Render.")
         
-        # LOGIC: Create directory/project locally on Render if laptop is away
-        if "create new project" in command or "go to" in command:
-            new_folder = command.replace("create new project", "").replace("go to", "").replace("directory", "").strip().replace(" ", "_")
-            if new_folder:
-                active_mission = new_folder
-                # This creates the folder on Render's disk
-                set_active_project(active_mission) 
-                return jsonify({
-                    "response": f"(Cloud Mode) Laptop offline. Project '{active_mission}' created in temporary cloud storage.",
-                    "audio": "frontend"
-                })
-
-        # LOGIC: Run AI and save the response to the cloud disk
-        ai_response = get_ai_response(command)
+        # LOGIC FIX: Instead of writing new 'if' statements, 
+        # just call your existing process function!
+        response_text = process_eva_command(command)
         
-        # Save the interaction to Render's local history folder
-        log_task(command, ai_response)
-        archive_groq_response(command, ai_response) # This creates the .txt/.py file on Render
+        # Now Render will correctly run line 330 and update active_mission
+        log_task(command, response_text)
+        archive_groq_response(command, response_text)
         
         return jsonify({
             "transcript": command,
-            "response": f"(Cloud Mode) {ai_response}",
+            "response": f"(Cloud Mode) {response_text}",
             "audio": "frontend"
         })
     
-    
+
 @app.route('/stop-eva', methods=['POST'])
 def stop_eva():
     # try:
