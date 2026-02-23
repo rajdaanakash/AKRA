@@ -30,33 +30,55 @@ API_KEYS = [k for k in API_KEYS if k]
 current_key_index = 0
 
 def get_ai_response(prompt):
-    global current_key_index
+    global current_key_index, active_mission
     
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
     if os.path.exists(NOTES_FILE):
         with open(NOTES_FILE, "r") as f:
             notes = json.load(f)
-            for n in notes[-3:]: # Trimming for Token Budget
+            for n in notes[-3:]: 
                 permanent_notes += f"- {n['content']}\n"
 
     history_context = ""
     if os.path.exists(HISTORY_FILE):
         with open(HISTORY_FILE, "r") as f:
             history = json.load(f)
-            for item in history[-5:]: # Preventing 429 Errors
+            for item in history[-5:]: 
                 history_context += f"User: {item['user']}\nEVA: {item['eva']}\n"
 
-    # Define system_msg here so it exists before the loop starts
-    system_msg = f"You are EVA, created by Akash. Notes:\n{permanent_notes}\nChat:\n{history_context}"
+    # --- NEW: ACTIVE DIRECTORY SCANNER ---
+    project_memory = ""
+    mission_path = os.path.join(HISTORY_DIR, active_mission)
+    
+    if os.path.exists(mission_path):
+        # We look for the 3 most recently saved codes/logs in this directory
+        files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
+        
+        for file_name in files[:3]: 
+            try:
+                with open(os.path.join(mission_path, file_name), "r", encoding="utf-8") as f:
+                    # Read only 1000 chars instead of 1500 to stay safe
+                    content = f.read(1000) 
+                    # Remove extra whitespace/newlines to save space
+                    clean_content = " ".join(content.split()) 
+                    project_memory += f"\n[File: {file_name}]\n{clean_content}\n"
+            except:
+                continue
+
+    # Define system_msg with the new Project Memory
+    system_msg = (
+        f"You are EVA, created by Akash. Current Project: {active_mission}.\n"
+        f"Project Files for Context:\n{project_memory}\n"
+        f"Permanent Notes:\n{permanent_notes}\n"
+        f"Recent Chat:\n{history_context}"
+    )
 
     # --- 2. THE ROTATION LOOP ---
     for _ in range(len(API_KEYS)):
         try:
-            # Re-initialize client with the current working key
             client = Groq(api_key=API_KEYS[current_key_index])
-            
-            # This is the block that was showing red lines
             chat_completion = client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_msg},
@@ -65,9 +87,7 @@ def get_ai_response(prompt):
                 model="llama-3.3-70b-versatile",
             )
             return chat_completion.choices[0].message.content
-
         except Exception as e:
-            # Catching the 429 limit you hit earlier
             if "429" in str(e) or "rate_limit" in str(e).lower():
                 print(f"System: Key {current_key_index} exhausted. Rotating...")
                 current_key_index = (current_key_index + 1) % len(API_KEYS)
@@ -629,13 +649,15 @@ def startup_greeting():
     speak(f"{greeting} Sir. Systems are nominal. EVA is online.")
 
 if __name__ == "__main__":
+    # NEW: Sync with GitHub on startup to regain "Memory"
+    try:
+        repo = git.Repo(BASE_DIR)
+        origin = repo.remotes.origin
+        origin.pull('main') # Download everything you've ever saved
+        print("System: Project history restored from GitHub.")
+    except Exception as e:
+        print(f"System: Startup sync failed: {e}")
+
     startup_greeting()
-    
-    # Render will automatically give EVA a port number via an 'Environment Variable'
-    # If it can't find one, it will use your default 59059
     port = int(os.environ.get("PORT", 10000))
-    
-    print(f"EVA is now live on the cloud, Sir. Listening on port {port}...")
-    
-    # This 'serve' function from Waitress is for Production use
     serve(app, host='0.0.0.0', port=port)

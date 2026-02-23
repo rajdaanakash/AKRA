@@ -4,3 +4,5 @@ __pycache__
 .env
 task_history.json
 eva_notes.json
+!history/
+!history/**
