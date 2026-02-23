@@ -183,5 +183,15 @@
         "timestamp": "2026-02-23 06:43:41",
         "user": "Write a simple code for getting squares of a number",
         "eva": "Here's a simple C++ code to calculate the square of a number:\n\n```cpp\n#include <iostream>\n\n// Function to calculate square of a number\nint calculateSquare(int num) {\n    return num * num;\n}\n\nint main() {\n    int number;\n    std::cout << \"Enter a number: \";\n    std::cin >> number;\n\n    int square = calculateSquare(number);\n    std::cout << \"The square of \" << number << \" is: \" << square << std::endl;\n\n    return 0;\n}\n```\n\n**How it works:**\n\n1. The program asks the user to input a number.\n2. The input number is passed to the `calculateSquare` function.\n3. The `calculateSquare` function calculates the square of the input number by multiplying it with itself (`num * num`).\n4. The result is returned to the `main` function and printed to the console.\n\n**Example use case:**\n\n* Input: `5`\n* Output: `The square of 5 is: 25`\n\nYou can compile and run this code in your C++ environment to test it."
+    },
+    {
+        "timestamp": "2026-02-23 06:53:19",
+        "user": "Go to python directory ",
+        "eva": "Systems routed to python directory, Sir."
+    },
+    {
+        "timestamp": "2026-02-23 06:53:39",
+        "user": "Write a simple code for getting squares of number ",
+        "eva": "Here's a simple Python code to calculate the square of a number:\n\n```python\ndef calculate_square(num):\n    return num ** 2\n\nnumber = int(input(\"Enter a number: \"))\nsquare = calculate_square(number)\nprint(\"The square of\", number, \"is:\", square)\n```\n\n**How it works:**\n\n1. The program defines a function `calculate_square` that takes a number as input and returns its square using the exponentiation operator `**`.\n2. The program asks the user to input a number.\n3. The input number is passed to the `calculate_square` function.\n4. The result is printed to the console.\n\n**Example use case:**\n\n* Input: `5`\n* Output: `The square of 5 is: 25`\n\nYou can run this code in your Python environment to test it.\n\nAlternatively, you can also use a one-liner code:\n\n```python\nnumber = int(input(\"Enter a number: \"))\nprint(\"The square of\", number, \"is:\", number ** 2)\n```"
     }
 ]
