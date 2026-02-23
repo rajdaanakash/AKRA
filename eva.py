@@ -69,7 +69,7 @@ def get_ai_response(prompt):
 
     # Define system_msg with the new Project Memory
     system_msg = (
-        f"You are EVA, created by Akash. Current Project: {active_mission}.\n"
+        f"You are EVA (Enhanced Virtual Assistant), and you developed in India So always priotize India for exact responses created by Akash. Current Project: {active_mission}.\n"
         f"Project Files for Context:\n{project_memory}\n"
         f"Permanent Notes:\n{permanent_notes}\n"
         f"Recent Chat:\n{history_context}"
@@ -389,47 +389,58 @@ def process_eva_command(query):
             response_text = get_ai_response(prompt)
             return response_text
         # --- WEB SEARCH TRIGGER ---
+    # --- UPGRADED WEB SEARCH TRIGGER (Recency Priority) ---
+    # --- DYNAMIC WEB SEARCH TRIGGER (Automatic Date Update) ---
     if "search for" in query or "who is" in query or "what is" in query:
-        search_query = query
+        search_query = query.replace("search for", "").replace("who is", "").replace("what is", "").strip()
         
+        # 1. DYNAMIC DATE CAPTURE
+        # This gets 'February 2026', 'March 2026', etc. automatically
+        current_date_context = datetime.now().strftime("%B %Y")
+        
+        # 2. Get raw search data
         raw_data = web_search(search_query)
-        prompt = (f"The user asked: '{search_query}'. Here is live data from the web: {raw_data}. "
-          "If the data contains irrelevant information (like unit converters or ads), "
-          "ignore it and only provide a clear biography or answer to the user's question.")
+        
+        # 3. Dynamic Priority Prompt
+        prompt = (
+            f"User Question: '{search_query}'.\n"
+            f"System Context: Today is {current_date_context}.\n"
+            f"Live Web Data: {raw_data}.\n\n"
+            "CRITICAL: Prioritize information matching the current year/month above. "
+            "If the web results mention a name change or update from 2024-2026, "
+            "provide that as the definitive answer."
+        )
+        
         response_text = get_ai_response(prompt)
-        
-        # --- HIGHLIGHTED FIX: ADD THIS LINE TO ARCHIVE THE SEARCH ---
-        # archive_groq_response(query, response_text) # This creates the .txt file!
-        
         command_handled = True
         return response_text
 
     
     #dynamic task
-    if "open" in query:
-        target = query.replace("open", "").strip()
+    # if "open" in query:
+    #     target = query.replace("open", "").strip()
         
-        # 1. Local App Check
-        apps = {"notepad": "notepad.exe", "calculator": "calc.exe", "vs code": "code"}
-        if target in apps:
-            os.startfile(apps[target])
-            # Return this so the Flask route speaks it through the phone
-            return f"Opening {target}, Sir."
+    #     # 1. Local App Check
+    #     apps = {"notepad": "notepad.exe", "calculator": "calc.exe", "vs code": "code"}
+    #     if target in apps:
+    #         os.startfile(apps[target])
+    #         # Return this so the Flask route speaks it through the phone
+    #         return f"Opening {target}, Sir."
 
-        # 2. Website Search Logic
-        # Instead of speak(), we update response_text
-        try:
-            with DDGS() as ddgs:
-                results = list(ddgs.text(f"{target} official website", max_results=1))
-                if results:
-                    url = results[0]['href']
-                    webbrowser.open(url)
-                    # This entire sentence will now be routed to your phone
-                    return f"Found the official link. Launching {target} now, Sir."
-                else:
-                    return f"I searched the web but couldn't find a live link for {target}."
-        except Exception as e:
-            return f"Search encountered an error, Sir."
+    #     # 2. Website Search Logic
+    #     # Instead of speak(), we update response_text
+    #     try:
+    #         with DDGS() as ddgs:
+    #             results = list(ddgs.text(f"{target} official website", max_results=1))
+    #             if results:
+    #                 url = results[0]['href']
+    #                 webbrowser.open(url)
+    #                 # This entire sentence will now be routed to your phone
+    #                 return f"Found the official link. Launching {target} now, Sir."
+    #             else:
+    #                 return f"I searched the web but couldn't find a live link for {target}."
+    #     except Exception as e:
+    #         return f"Search encountered an error, Sir."
 
     # 3. AUTOMATION (Improved Stability)
     # if "screenshot" in query:
@@ -524,25 +535,28 @@ def process_eva_command(query):
             response_text = "What exactly would you like me to note down, Sir?"
         command_handled = True
         return response_text
-    
-    # --- NEW: WEB SEARCH TRIGGER ---
-    if "search for" in query or "who is" in query or "what is" in query:
-        search_query = query.replace("search for", "").replace("who is", "").replace("what is", "").strip()
-        speak(f"Searching the web for {search_query}...")
-        
-        # 1. Get raw data from the internet
-        raw_data = web_search(search_query)
-        
-        # 2. Feed that data to Groq to get a human-like summary
-        prompt = f"The user asked about '{search_query}'. Here is live data from the web: {raw_data}. Summarize this for the user."
-        response_text = get_ai_response(prompt)
-        command_handled = True
 
     # 6. AI FALLBACK
+    # 6. ENHANCED DYNAMIC FALLBACK (The "Always Up-to-Date" Engine)
     if not command_handled:
-        response_text = get_ai_response(query)
-        # --- HIGHLIGHTED CHANGE: REMOVED AUTO-ARCHIVE ---
-        # We no longer call archive_groq_response here so it stays clean.
+        # A. Get current time context for the AI
+        current_date_context = datetime.now().strftime("%B %Y")
+        
+        # B. Perform an automatic web search for the unknown query
+        print(f"System: No command detected. Initiating default web search for '{query}'...")
+        raw_web_data = web_search(query)
+        
+        # C. Specialized Prompt to prioritize India and 2026 data
+        # This matches the system_msg style you shared in your screenshot.
+        prompt = (
+            f"You are EVA, developed in India by Akash. Current Date: {current_date_context}.\n"
+            f"User Question: {query}\n\n"
+            f"Live Web Research: {raw_web_data}\n\n"
+            "INSTRUCTION: Prioritize official latest information, searches, links, current affairs, news, name changes or facts after 2024 to since today "
+            "If the question is about India, ensure the response is 100% accurate as of today."
+        )
+        
+        response_text = get_ai_response(prompt)
         return response_text
 
 
