@@ -11,14 +11,12 @@ from groq import Groq
 from datetime import datetime
 from ddgs import DDGS
 import requests
-# import subprocess
+import subprocess
 import shlex
 from bs4 import BeautifulSoup
 from waitress import serve
 import git
 import re
-from dotenv import load_dotenv
-# import shutil
 
 try:
     import rag_engine
@@ -30,7 +28,6 @@ except ImportError:
 # --- CONFIGURATION ---
 
 
-load_dotenv()
 API_KEYS = [
     os.environ.get("GROQ_API_KEY_1"),
     os.environ.get("GROQ_API_KEY_2")
@@ -41,7 +38,7 @@ current_key_index = 0
 
 def get_ai_response(prompt):
     global current_key_index
-    
+
     # --- NEW: RETRIEVE TEXTBOOK CONTEXT ---
     # This searches your 6,632 chunks on your E: drive
     local_context = ""
@@ -50,7 +47,7 @@ def get_ai_response(prompt):
             local_context = rag_engine.get_relevant_context(prompt)
         except:
             pass
-    
+
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
     if os.path.exists(NOTES_FILE):
@@ -78,7 +75,7 @@ def get_ai_response(prompt):
         try:
             # Re-initialize client with the current working key
             client = Groq(api_key=API_KEYS[current_key_index])
-            
+
             # This is the block that was showing red lines
             chat_completion = client.chat.completions.create(
                 messages=[
@@ -95,10 +92,10 @@ def get_ai_response(prompt):
                 print(f"System: Key {current_key_index} exhausted. Rotating...")
                 current_key_index = (current_key_index + 1) % len(API_KEYS)
                 continue 
-            return "Sir, I am unable to reach the neural network. Please check your local API keys."
-            
-                
-   
+            else:
+                return f"Neural Error: {e}"
+
+
 
 # This finds the EXACT folder where eva.py is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -118,50 +115,46 @@ def save_note(content):
         if os.path.exists(NOTES_FILE):
             with open(NOTES_FILE, "r") as f:
                 notes = json.load(f)
-        
+
         notes.append({
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "content": content
         })
-        
+
         with open(NOTES_FILE, "w") as f:
             json.dump(notes, f, indent=4)
         return True
     except Exception as e:
         print(f"Note Saving Error: {e}")
         return False
-    
+
 def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
+        # Explicitly build the URL with your username and token
         repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
-        
+
         repo = git.Repo(BASE_DIR)
 
+        # Set identity signatures
         with repo.config_writer() as cw:
             cw.set_value("user", "name", "rajdaanakash")
-            # FIX 1: Use the email associated with your GitHub account
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
-        # FIX 2: Clear any stuck merge states before trying to sync
-        if os.path.exists(os.path.join(BASE_DIR, ".git", "MERGE_HEAD")):
-            os.remove(os.path.join(BASE_DIR, ".git", "MERGE_HEAD"))
-
         repo.git.add(all=True)
-        
+        # Check if there are actually changes to commit to avoid errors
         if repo.is_dirty(untracked_files=True):
-            commit_msg = f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            repo.index.commit(commit_msg)
-            
+            repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
+            # CRITICAL: Re-set the remote URL to ensure the token is used for THIS push
             if 'origin' in repo.remotes:
                 origin = repo.remote(name='origin')
                 origin.set_url(repo_url)
             else:
                 origin = repo.create_remote('origin', repo_url)
-            
-            # FIX 3: Pull before pushing to handle the "non-fast-forward" errors automatically
-            origin.pull('main') 
-            origin.push('main')
+
+            # Use 'HEAD:main' to tell Render exactly where to push
+            origin.push(refspec='HEAD:main', force=True)
             print("System: Mission logs successfully synced to GitHub.")
             return True
         else:
@@ -171,48 +164,28 @@ def push_to_github():
     except Exception as e:
         print(f"Git Sync Error: {e}") 
         return False
-# def launch_app(app_name):
-#     # 1. Check if the app is in the Windows PATH (like 'code', 'notepad', 'python')
-#     if shutil.which(app_name):
-#         subprocess.Popen(app_name, shell=True)
-#         return f"System: {app_name} launched via System Path."
-
-#     # 2. Try the 'start' command which handles registered Windows apps
-#     try:
-#         # This tells Windows to look in the Registry for the app name
-#         process = subprocess.Popen(f'start {app_name}', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#         stdout, stderr = process.communicate()
-        
-#         if process.returncode == 0:
-#             return f"System: {app_name} initiated via Windows Shell."
-#     except Exception:
-#         pass
-
-#     # 3. Backup: Specific paths for tricky apps on your Lenovo LOQ
-#     paths = {
-#         "discord": "C:\\Users\\Akash\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe",
-#         "spotify": "C:\\Users\\Akash\\AppData\\Local\\Microsoft\\WindowsApps\\Spotify.exe"
-#     }
-    
-#     if app_name.lower() in paths:
-#         target = paths[app_name.lower()]
-#         subprocess.Popen(f'start "" "{target}"', shell=True)
-#         return f"System: {app_name} launched from local path."
-
-#     return f"System: Could not resolve '{app_name}'. Try giving the full path or check spelling."
 
 def archive_groq_response(query, response):
     try:
         mission_path = os.path.join(HISTORY_DIR, active_mission)
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
+
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         
+        # --- AI-POWERED DETECTION ---
+        # Look for the markdown code block: ```language
         # 1. EXTRACT CODE AND DETECT LANGUAGE
         match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
-        
+
         if match:
+            # The AI has already identified the language here (e.g., 'python', 'html')
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
+            
+            # Map common names to extensions, but keep it flexible
+            ext_map = {"python": ".py", "javascript": ".js", "typescript": ".ts", "markdown": ".md"}
+            # If it's a known shorthand (like 'js'), use it; otherwise, use .[detected_lang]
             ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
 
@@ -227,31 +200,33 @@ def archive_groq_response(query, response):
             save_data = response
             clean_name = "response_log"
 
+        filename = f"{query[:20].replace(' ', '_')}_{timestamp}{ext}"
         # 3. UNIQUE FILENAME (Prevents overwriting same names)
         timestamp = datetime.now().strftime("%H%M%S")
         filename = f"{clean_name}_{timestamp}{ext}"
         file_path = os.path.join(mission_path, filename)
-        
+
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(save_data)
-            
+
         print(f"File created: {file_path}")
+        push_to_github() # Your verified sync fix
         push_to_github() 
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
         return None
-    
+
 def scrape_website_content(url):
     """Visits a URL and extracts the main text content."""
     try:
         # User-agent makes the request look like it's coming from a real browser
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(url, headers=headers, timeout=10)
-        
+
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            
+
             # Remove scripts and styles that aren't useful text
             for script in soup(["script", "style"]):
                 script.extract()
@@ -263,7 +238,7 @@ def scrape_website_content(url):
     except Exception as e:
         print(f"Scraping Error: {e}")
     return "I couldn't access that website, Sir."
-    
+
 def web_search(query):
     """Searches the live internet for a query and returns a summary."""
     try:
@@ -294,7 +269,7 @@ def speak(text):
     #     voices = local_engine.getProperty('voices')
     #     local_engine.setProperty('voice', voices[1].id)
     #     local_engine.setProperty('rate', 185)
-        
+
     #     local_engine.say(text)
     #     local_engine.runAndWait()
     #     local_engine.stop() # Clean up the engine after speaking
@@ -308,19 +283,19 @@ def log_task(query, response):
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
-        
+
         # Append the new interaction
         history.append({
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "user": query,
             "eva": response
         })
-        
+
         # --- NEW: FIFO LOGIC (Limit to 2000 lines/entries) ---
         # Since each entry is roughly 5-7 lines in JSON, 
         # we limit the 'number of entries' to keep the total lines manageable.
         MAX_ENTRIES = 100 # 300 entries is roughly 2000 lines in a JSON file
-        
+
         if len(history) > MAX_ENTRIES:
             # Remove the oldest entry (index 0)
             history = history[-MAX_ENTRIES:] 
@@ -351,11 +326,11 @@ def set_active_project(name):
     global HISTORY_DIR #
     # Path: history/ai_responses/your_project_name
     project_path = os.path.join(HISTORY_DIR, name) 
-    
+
     if not os.path.exists(project_path):
         os.makedirs(project_path) #
         print(f"System: Created new directory at {project_path}")
-    
+
     return project_path
 
 def process_eva_command(query):
@@ -364,16 +339,6 @@ def process_eva_command(query):
     command_handled = False
     global response_text
     response_text = ""
-
-    # --- NEW: HIGH-PRIORITY APP LAUNCHER ---
-    # We check for "open" or "launch" before anything else
-    # if "start" in query or "launch" in query:
-    #     # Extract app name: "open discord" -> "discord"
-    #     parts = query.split("start ") if "start" in query else query.split("launch ")
-    #     if len(parts) > 1:
-    #         target_app = parts[1].strip()
-    #         # This calls the hybrid logic we built for your LOQ paths
-    #         return launch_app(target_app)
 
     # --- PROJECT CREATION ---
     if "create new project" in query or "create new directory" in query:
@@ -405,10 +370,10 @@ def process_eva_command(query):
                 last_interaction = history[-1]
                 # 1. Save the file locally on the Render server
                 file_path = archive_groq_response(last_interaction['user'], last_interaction['eva'])
-                
+
                 # 2. TRIGGER THE GITHUB PUSH
                 sync_success = push_to_github() 
-                
+
                 if sync_success:
                     return f"Interaction archived in the {active_mission} sector and synced to GitHub, Sir."
                 else:
@@ -418,18 +383,18 @@ def process_eva_command(query):
     if "scrape" in query or "read the page" in query:
         # Find the URL in the query or use search to find a URL first
         speak("Initializing deep research mode...")
-        
+
         # 1. Use Search to find the best link
         search_query = query.replace("scrape", "").replace("read the page", "").strip()
         search_results = list(DDGS().text(search_query, max_results=1))
-        
+
         if search_results:
             target_url = search_results[0]['href']
             speak(f"Reading documentation from {search_results[0]['title']}...")
-            
+
             # 2. Scrape the full text from that URL
             deep_content = scrape_website_content(target_url)
-            
+
             # 3. Use AI to summarize the deep content
             prompt = f"The user asked: {query}. Here is the full content from the documentation: {deep_content}. Explain this clearly."
             response_text = get_ai_response(prompt)
@@ -437,24 +402,24 @@ def process_eva_command(query):
         # --- WEB SEARCH TRIGGER ---
     if "search for" in query or "who is" in query or "what is" in query:
         search_query = query
-        
+
         raw_data = web_search(search_query)
         prompt = (f"The user asked: '{search_query}'. Here is live data from the web: {raw_data}. "
           "If the data contains irrelevant information (like unit converters or ads), "
           "ignore it and only provide a clear biography or answer to the user's question.")
         response_text = get_ai_response(prompt)
-        
+
         # --- HIGHLIGHTED FIX: ADD THIS LINE TO ARCHIVE THE SEARCH ---
         # archive_groq_response(query, response_text) # This creates the .txt file!
-        
+
         command_handled = True
         return response_text
 
-    
+
     #dynamic task
     if "open" in query:
         target = query.replace("open", "").strip()
-        
+
         # 1. Local App Check
         apps = {"notepad": "notepad.exe", "calculator": "calc.exe", "vs code": "code"}
         if target in apps:
@@ -477,7 +442,7 @@ def process_eva_command(query):
         except Exception as e:
             return f"Search encountered an error, Sir."
 
-    # # 3. AUTOMATION (Improved Stability)
+    # 3. AUTOMATION (Improved Stability)
     # if "screenshot" in query:
     #     try:
     #         pyautogui.screenshot("eva_snap.png")
@@ -486,13 +451,13 @@ def process_eva_command(query):
     #         response_text = "Sir, I couldn't capture the screen. Check folder permissions."
     #     command_handled = True
     #     return response_text
-    
+
     # if "mute" in query:
     #     pyautogui.press("volumemute")
     #     response_text = "System volume toggled."
     #     command_handled = True
 
-    # # # 4. OS TASKS
+    # # 4. OS TASKS
     # if "lock the system" in query:
     #     response_text = "Locking the workstation."
     #     os.system("shutdown /l")
@@ -506,6 +471,42 @@ def process_eva_command(query):
     #     pyautogui.hotkey('alt', 'f4') #
     #     return "Terminating active window."
 
+    # if "system" in query or "launch" in query or"run" in query:
+    #     # 1. LIVE SEARCH: Get the most updated 2026 command first
+    #     search_query = f"modern Windows 11 CMD command for {query} 2026"
+    #     raw_web_data = web_search(search_query) # This uses your DDGS live search
+
+    #     # 2. AI CLEANUP: Use Groq only to format the live data
+    #     prompt = (f"The user wants to: {query}. Based on this 2026 web data: {raw_web_data}, "
+    #               "extract ONLY the specific CMD command. Return nothing but the command.")
+    #     raw_cmd = get_ai_response(prompt).strip()
+
+    #     # 3. SAFETY CHECK: Same as before
+    #     critical_cmds = ["shutdown", "restart", "del", "rmdir", "format"]
+    #     if any(c in raw_cmd.lower() for c in critical_cmds):
+    #         # Remember: This speaks to your phone if in Phone Mode!
+    #         speak(f"Sir, that is a critical command: {raw_cmd}. Confirm execution?")
+    #         confirm = listen().lower()
+    #         if "yes" not in confirm: return "Security abort."
+
+    #     # 4. SECURE EXECUTION: Optimized for Windows 11 Apps & Folders
+    #     try:
+    #         # Check if raw_cmd is actually a path to one of your project folders
+    #         # We check the 'history/ai_responses' sector specifically
+    #         potential_path = os.path.join(HISTORY_DIR, raw_cmd)
+
+    #         if os.path.isdir(potential_path):
+    #             # If it's a folder, we MUST use 'explorer' to open it
+    #             subprocess.Popen(f'explorer "{potential_path}"', shell=True)
+    #             return f"Opening your {raw_cmd} directory, Sir."
+    #         else:
+    #             # If it's a standard command like 'taskmgr', run it normally
+    #             subprocess.Popen(raw_cmd, shell=True)
+    #             return f"Task initiated with verified 2026 data: {raw_cmd}"
+
+    #     except Exception as e:
+    #         return f"I encountered an error launching that, Sir. Error: {e}"
+
     # 5. HISTORY REVIEW
     if "show history" in query or "tasks i performed" in query:
         if os.path.exists(HISTORY_FILE):
@@ -513,36 +514,36 @@ def process_eva_command(query):
                 history = json.load(f)
                 last_task = history[-1]['user'] if history else "none"
                 response_text = f"Your last recorded task was: {last_task}"
-                
+
         else:
             response_text = "No history file found yet."
         command_handled = True
         return response_text
-        
+
 
     if "note this" in query or "remind me" in query:
         note_content = query.replace("note this", "").replace("remind me", "").strip()
-        
+
         if note_content:
             success = save_note(note_content)
             if success:
                 response_text = f"I've secured that in your notes, Sir: {note_content}"
-                
+
             else:
                 response_text = "Sir, I encountered a permission error while saving your note."
         else:
             response_text = "What exactly would you like me to note down, Sir?"
         command_handled = True
         return response_text
-    
+
     # --- NEW: WEB SEARCH TRIGGER ---
     if "search for" in query or "who is" in query or "what is" in query:
-        search_query = query
+        search_query = query.replace("search for", "").replace("who is", "").replace("what is", "").strip()
         speak(f"Searching the web for {search_query}...")
-        
+
         # 1. Get raw data from the internet
         raw_data = web_search(search_query)
-        
+
         # 2. Feed that data to Groq to get a human-like summary
         prompt = f"The user asked about '{search_query}'. Here is live data from the web: {raw_data}. Summarize this for the user."
         response_text = get_ai_response(prompt)
@@ -570,7 +571,7 @@ def update_io():
 @app.route('/run-eva', methods=['POST'])
 def run_eva():
     data = request.get_json(silent=True) or {}
-    
+
     if io_config["mic"] == "Backend":
         query = listen()
     else:
@@ -580,14 +581,14 @@ def run_eva():
         response_text = process_eva_command(query)
         # Manually log the task here since we removed it from the function
         log_task(query, response_text) 
-        
+
         if io_config["speaker"] == "Backend":
             speak(response_text) # ONLY the laptop speaks
             return jsonify({"transcript": query, "response": response_text, "audio": "backend"})
         else:
             # Laptop stays silent; only the phone will speak
             return jsonify({"transcript": query, "response": response_text, "audio": "frontend"})
-            
+
     return jsonify({"response": "Silence."})
 
 @app.route('/')
@@ -613,7 +614,7 @@ def run_shortcut():
             return jsonify({"transcript": "Shortcut", "response": response_text, "audio": "backend"})
         else:
             return jsonify({"transcript": "Shortcut", "response": response_text, "audio": "frontend"})
-            
+
     return jsonify({"response": "No command received."})
 
 @app.route('/stop-eva', methods=['POST'])
@@ -664,4 +665,3 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     print(f"EVA is listening on port {port}...")
     # Use host='0.0.0.0' so Render can 'see' the app
-    serve(app, host='0.0.0.0', port=port)
