@@ -2,6 +2,5 @@
 __pycache__
 *.pyc
 .env
-history/
 task_history.json
 eva_notes.json
