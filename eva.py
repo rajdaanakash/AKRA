@@ -134,30 +134,34 @@ def save_note(content):
 def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
-        # Explicitly build the URL with your username and token
         repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
         
         repo = git.Repo(BASE_DIR)
 
-        # Set identity signatures
         with repo.config_writer() as cw:
             cw.set_value("user", "name", "rajdaanakash")
+            # FIX 1: Use the email associated with your GitHub account
             cw.set_value("user", "email", "rajdaanakash@gmail.com") 
 
+        # FIX 2: Clear any stuck merge states before trying to sync
+        if os.path.exists(os.path.join(BASE_DIR, ".git", "MERGE_HEAD")):
+            os.remove(os.path.join(BASE_DIR, ".git", "MERGE_HEAD"))
+
         repo.git.add(all=True)
-        # Check if there are actually changes to commit to avoid errors
+        
         if repo.is_dirty(untracked_files=True):
-            repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            commit_msg = f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+            repo.index.commit(commit_msg)
             
-            # CRITICAL: Re-set the remote URL to ensure the token is used for THIS push
             if 'origin' in repo.remotes:
                 origin = repo.remote(name='origin')
                 origin.set_url(repo_url)
             else:
                 origin = repo.create_remote('origin', repo_url)
             
-            # Use 'HEAD:main' to tell Render exactly where to push
-            origin.push(refspec='HEAD:main', force=True)
+            # FIX 3: Pull before pushing to handle the "non-fast-forward" errors automatically
+            origin.pull('main') 
+            origin.push('main')
             print("System: Mission logs successfully synced to GitHub.")
             return True
         else:
@@ -167,7 +171,6 @@ def push_to_github():
     except Exception as e:
         print(f"Git Sync Error: {e}") 
         return False
-
 # def launch_app(app_name):
 #     # 1. Check if the app is in the Windows PATH (like 'code', 'notepad', 'python')
 #     if shutil.which(app_name):
