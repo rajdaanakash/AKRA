@@ -21,16 +21,17 @@ import re
 # --- CONFIGURATION ---
 
 
-API_KEYS = [
-    os.environ.get("GROQ_API_KEY_1"),
-    os.environ.get("GROQ_API_KEY_2")
+API_POOL = [
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_1"), "model": "llama-3.3-70b-versatile"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_2"), "model": "llama-3.3-70b-versatile"},
+    {"provider": "openrouter", "key": os.environ.get("OPENROUTER_API_KEY"), "model": "openrouter/free"}
 ]
-# Keep only keys that actually exist
-API_KEYS = [k for k in API_KEYS if k]
-current_key_index = 0
+# Filter out empty keys
+API_POOL = [p for p in API_POOL if p["key"]]
+current_pool_index = 0
 
 def get_ai_response(prompt):
-    global current_key_index, active_mission
+    global current_pool_index, active_mission
     
     # --- 1. PREPARE ALL DATA FIRST ---
     permanent_notes = ""
@@ -69,31 +70,55 @@ def get_ai_response(prompt):
 
     # Define system_msg with the new Project Memory
     system_msg = (
-        f"You are EVA (Enhanced Virtual Assistant), and you developed in India So always priotize India for exact responses created by Akash. Current Project: {active_mission}.\n"
+        f"You are EVA (Enhanced Virtual Assitant), created by Akash in India so provide data in India's point of view and cercumsentence. Current Project: {active_mission}.\n"
         f"Project Files for Context:\n{project_memory}\n"
         f"Permanent Notes:\n{permanent_notes}\n"
         f"Recent Chat:\n{history_context}"
     )
 
     # --- 2. THE ROTATION LOOP ---
-    for _ in range(len(API_KEYS)):
+    for _ in range(len(API_POOL)):
+        config = API_POOL[current_pool_index]
+        provider = config["provider"]
+        api_key = config["key"]
+        model = config["model"]
+
         try:
-            client = Groq(api_key=API_KEYS[current_key_index])
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": system_msg},
-                    {"role": "user", "content": prompt}
-                ],
-                model="llama-3.3-70b-versatile",
-            )
-            return chat_completion.choices[0].message.content
+            if provider == "groq":
+                # Use Groq Library for Groq keys
+                client = Groq(api_key=api_key)
+                chat_completion = client.chat.completions.create(
+                    messages=[{"role": "system", "content": system_msg}, {"role": "user", "content": prompt}],
+                    model=model,
+                )
+                return chat_completion.choices[0].message.content
+
+            elif provider == "openrouter":
+                # Use Requests for OpenRouter keys
+                response = requests.post(
+                    url="https://openrouter.ai/api/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    data=json.dumps({
+                        "model": model,
+                        "messages": [{"role": "system", "content": system_msg}, {"role": "user", "content": prompt}]
+                    }),
+                    timeout=15
+                )
+                if response.status_code == 200:
+                    return response.json()['choices'][0]['message']['content']
+                else:
+                    raise Exception(f"OpenRouter Status {response.status_code}")
+
         except Exception as e:
-            if "429" in str(e) or "rate_limit" in str(e).lower():
-                print(f"System: Key {current_key_index} exhausted. Rotating...")
-                current_key_index = (current_key_index + 1) % len(API_KEYS)
+            # Detect Rate Limits (429) or Errors and Rotate
+            if "429" in str(e) or "rate_limit" in str(e).lower() or "Status 401" in str(e):
+                print(f"System: {provider.upper()} Key {current_pool_index} failed. Rotating...")
+                current_pool_index = (current_pool_index + 1) % len(API_POOL)
                 continue 
             else:
                 return f"Neural Error: {e}"
+    
+    return "All neural pathways exhausted, Sir."
                 
    
 
