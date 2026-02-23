@@ -1,0 +1,39 @@
+MISSION: CPP
+USER QUERY: Write a simple code for getting squares of a number
+------------------------------
+EVA RESPONSE:
+Here's a simple C++ code to calculate the square of a number:
+
+```cpp
+#include <iostream>
+
+// Function to calculate square of a number
+int calculateSquare(int num) {
+    return num * num;
+}
+
+int main() {
+    int number;
+    std::cout << "Enter a number: ";
+    std::cin >> number;
+
+    int square = calculateSquare(number);
+    std::cout << "The square of " << number << " is: " << square << std::endl;
+
+    return 0;
+}
+```
+
+**How it works:**
+
+1. The program asks the user to input a number.
+2. The input number is passed to the `calculateSquare` function.
+3. The `calculateSquare` function calculates the square of the input number by multiplying it with itself (`num * num`).
+4. The result is returned to the `main` function and printed to the console.
+
+**Example use case:**
+
+* Input: `5`
+* Output: `The square of 5 is: 25`
+
+You can compile and run this code in your C++ environment to test it.
