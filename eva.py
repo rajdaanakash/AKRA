@@ -74,6 +74,8 @@ def get_ai_response(prompt):
         f"Project Files for Context:\n{project_memory}\n"
         f"Permanent Notes:\n{permanent_notes}\n"
         f"Recent Chat:\n{history_context}"
+        "STRICT INSTRUCTION: Provide data in clear Markdown format. "
+        "Avoid large HTML tables as they lag the system. Use bullet points or Markdown tables instead."
     )
 
     # --- 2. THE ROTATION LOOP ---
@@ -544,6 +546,11 @@ def process_eva_command(query):
             response_text = "No history file found yet."
         command_handled = True
         return response_text
+    
+    if len(response_text) > 4000:
+        # Save the huge data to a file instead of "blasting" it to the screen
+        file_path = archive_groq_response("Large Data Request", response_text)
+        return f"Response was too large for safe rendering. I have secured the full data in your mission logs: {file_path}"
         
 
     if "note this" in query or "remind me" in query:
