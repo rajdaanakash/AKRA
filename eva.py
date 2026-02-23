@@ -16,6 +16,7 @@ import shlex
 from bs4 import BeautifulSoup
 from waitress import serve
 import git
+import re
 
 # --- CONFIGURATION ---
 
@@ -145,26 +146,41 @@ def push_to_github():
         return False
 
 def archive_groq_response(query, response):
-    """Saves Groq AI responses into a specific mission directory."""
     try:
-        # --- HIGHLIGHTED CHANGE: ROUTE TO MISSION FOLDER ---
         mission_path = os.path.join(HISTORY_DIR, active_mission)
-        
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
         
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        filename = f"{query[:20]}_{timestamp}.txt" 
+        # 1. EXTRACT CODE AND DETECT LANGUAGE
+        match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
+        
+        if match:
+            detected_lang = match.group(1).lower()
+            save_data = match.group(2)
+            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html"}
+            ext = ext_map.get(detected_lang, f".{detected_lang}")
+
+            # 2. ASK AI FOR A SHORT, CLEAN FILENAME
+            # Instead of using the query, we ask Groq for a 2-word name
+            name_prompt = f"Suggest a 2-word filename (no extension) for this code: {save_data[:100]}"
+            clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
+            # Remove any unwanted punctuation the AI might include
+            clean_name = re.sub(r'[^\w\s-]', '', clean_name)
+        else:
+            ext = ".txt"
+            save_data = response
+            clean_name = "response_log"
+
+        # 3. UNIQUE FILENAME (Prevents overwriting same names)
+        timestamp = datetime.now().strftime("%H%M%S")
+        filename = f"{clean_name}_{timestamp}{ext}"
         file_path = os.path.join(mission_path, filename)
         
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(f"MISSION: {active_mission.upper()}\n")
-            f.write(f"USER QUERY: {query}\n")
-            f.write("-" * 30 + "\n")
-            f.write(f"EVA RESPONSE:\n{response}\n")
+            f.write(save_data)
             
-        print(f"Interaction archived in: {file_path}")
-        push_to_github()
+        print(f"File created: {file_path}")
+        push_to_github() 
         return file_path
     except Exception as e:
         print(f"Archive Error: {e}")
