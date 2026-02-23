@@ -113,5 +113,25 @@
         "timestamp": "2026-02-23 05:14:28",
         "user": "save it",
         "eva": "Archived locally, but GitHub sync failed. Check Render logs."
+    },
+    {
+        "timestamp": "2026-02-23 05:42:43",
+        "user": "Go to cpp directory",
+        "eva": "Systems routed to cpp directory, Sir."
+    },
+    {
+        "timestamp": "2026-02-23 05:42:44",
+        "user": "Akash",
+        "eva": "That's my creator's name. Akash is the one who created me, EVA. I'm an AI designed to assist and provide information to users like you. What would you like to know or discuss?"
+    },
+    {
+        "timestamp": "2026-02-23 05:43:15",
+        "user": "Write a code for getting squares of number",
+        "eva": "**Getting Squares of Numbers in C++**\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int num;\n\n    // Ask the user for a number\n    cout << \"Enter a number: \";\n    cin >> num;\n\n    // Calculate the square of the number\n    int square = num * num;\n\n    // Display the result\n    cout << \"The square of \" << num << \" is: \" << square << endl;\n\n    return 0;\n}\n```\n**Explanation:**\n\n1. We ask the user to input a number using `cin`.\n2. We calculate the square of the number by multiplying it with itself using the `*` operator.\n3. We display the result using `cout`.\n\n**Example Use Case:**\n\nWhen you run the program, it will prompt you to enter a number. Let's say you enter `5`. The program will then display the result: `The square of 5 is: 25`.\n\nAlternatively, you can also write a program to get squares of multiple numbers by using a loop:\n```cpp\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int num, i;\n\n    // Ask the user for the number of inputs\n    cout << \"Enter the number of inputs: \";\n    cin >> num;\n\n    // Loop through each input\n    for (i = 0; i < num; i++) {\n        int input;\n        cout << \"Enter number \" << i + 1 << \": \";\n        cin >> input;\n\n        // Calculate the square of the input\n        int square = input * input;\n\n        // Display the result\n        cout << \"The square of \" << input << \" is: \" << square << endl;\n    }\n\n    return 0;\n}\n```\nThis program will ask the user for the number of inputs, and then prompt the user to enter each number. It will then display the square of each number."
+    },
+    {
+        "timestamp": "2026-02-23 05:43:24",
+        "user": "what is your name",
+        "eva": "My name is EVA. I'm an AI designed to assist and provide information to users. I was created by Akash."
     }
 ]
