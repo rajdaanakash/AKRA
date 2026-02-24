@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from waitress import serve
 import git
 import re
+import html
 
 # --- CONFIGURATION ---
 
@@ -197,41 +198,52 @@ def archive_groq_response(query, response):
         mission_path = os.path.join(HISTORY_DIR, active_mission)
         if not os.path.exists(mission_path):
             os.makedirs(mission_path)
+
+        # 1. FIND ALL BLOCKS (Using finditer instead of search)
+        matches = list(re.finditer(r"```(\w+)\n(.*?)\n```", response, re.DOTALL))
         
-        # 1. EXTRACT CODE AND DETECT LANGUAGE
-        match = re.search(r"```(\w+)\n(.*?)\n```", response, re.DOTALL)
-        
-        if match:
+        # If no code blocks, save the whole text as one log
+        if not matches:
+            save_single_file(mission_path, "response_log", response, ".txt")
+            return "Log saved."
+
+        # 2. SAVE EACH BLOCK INDIVIDUALLY
+        for match in matches:
+            # Check FIFO limit before every single save
+            enforce_fifo_limit(mission_path)
+            
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
-            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html"}
+            
+            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html", "bash": ".sh"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
 
-            # 2. ASK AI FOR A SHORT, CLEAN FILENAME
-            # Instead of using the query, we ask Groq for a 2-word name
-            name_prompt = f"Suggest a 2-word filename (no extension) for this code: {save_data[:100]}"
+            # AI Filename Logic
+            name_prompt = f"Suggest a 2-word filename for this: {save_data[:50]}"
             clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
-            # Remove any unwanted punctuation the AI might include
             clean_name = re.sub(r'[^\w\s-]', '', clean_name)
-        else:
-            ext = ".txt"
-            save_data = response
-            clean_name = "response_log"
-
-        # 3. UNIQUE FILENAME (Prevents overwriting same names)
-        timestamp = datetime.now().strftime("%H%M%S")
-        filename = f"{clean_name}_{timestamp}{ext}"
-        file_path = os.path.join(mission_path, filename)
-        
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(save_data)
             
-        print(f"File created: {file_path}")
-        push_to_github() 
-        return file_path
+            save_single_file(mission_path, clean_name, save_data, ext)
+
+        return f"Sector {active_mission} updated with {len(matches)} new files."
+
     except Exception as e:
-        print(f"Archive Error: {e}")
+        print(f"Archive Multi-FIFO Error: {e}")
         return None
+
+# Helper to keep the code clean
+def enforce_fifo_limit(path):
+    MAX_FILES = 20
+    files = [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    if len(files) >= MAX_FILES:
+        files.sort(key=os.path.getmtime)
+        os.remove(files[0]) # Delete oldest
+
+def save_single_file(path, name, data, ext):
+    timestamp = datetime.now().strftime("%H%M%S")
+    filename = f"{name}_{timestamp}{ext}"
+    with open(os.path.join(path, filename), "w", encoding="utf-8") as f:
+        f.write(data)
     
 def scrape_website_content(url):
     """Visits a URL and extracts the main text content."""
@@ -694,18 +706,17 @@ def run_eva():
 
     if query:
         response_text = process_eva_command(query)
-        # Manually log the task here since we removed it from the function
+        
+        # NEW: Escape HTML characters so <iostream> is visible
+        safe_response = html.escape(response_text)
+        
         log_task(query, response_text) 
         
-        if io_config["speaker"] == "Backend":
-            speak(response_text) # ONLY the laptop speaks
-            return jsonify({"transcript": query, "response": response_text, "audio": "backend"})
-        else:
-            # Laptop stays silent; only the phone will speak
-            return jsonify({"transcript": query, "response": response_text, "audio": "frontend"})
-            
-    return jsonify({"response": "Silence."})
-
+        return jsonify({
+            "transcript": query, 
+            "response": safe_response, # Use the escaped version here
+            "audio": "frontend" if io_config["speaker"] == "Frontend" else "backend"
+        })
 @app.route('/')
 def index():
     try:
