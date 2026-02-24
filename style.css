@@ -491,3 +491,26 @@ code {
     display: block;
     margin-bottom: 10px;
 }
+.parent-container {
+  display: flex;
+  flex-direction: column; /* Stacks elements vertically */
+  align-items: center;    /* Centers elements horizontally */
+  justify-content: center; /* Centers elements vertically if container has height */
+  text-align: center;      /* Ensures the text itself is centered */
+}
+
+.eva-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;    /* Horizontal center */
+  justify-content: center; /* Vertical center */
+  width: 100%;            /* Ensure it spans the whole screen */
+  text-align: center;     /* Centers the text inside its own box */
+  margin: 0 auto;
+}
+
+.eva-text {
+  width: 100%;
+  display: block;
+  margin-bottom: 20px;    /* Space between text and orb */
+}
