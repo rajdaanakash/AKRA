@@ -785,19 +785,16 @@ def startup_greeting():
     greeting = "Good Morning" if hour < 12 else "Good Afternoon" if hour < 18 else "Good Evening"
     speak(f"{greeting} Sir. Systems are nominal. EVA is online.")
 
-# if __name__ == "__main__":
-#     # NEW: Sync with GitHub on startup to regain "Memory"
-#     try:
-#         repo = git.Repo(BASE_DIR)
-#         origin = repo.remotes.origin
-#         origin.pull('main') # Download everything you've ever saved
-#         print("System: Project history restored from GitHub.")
-#     except Exception as e:
-#         print(f"System: Startup sync failed: {e}")
-
-#     startup_greeting()
-#     port = int(os.environ.get("PORT", 10000))
-#     serve(app, host='0.0.0.0', port=port)
 if __name__ == "__main__":
+    # NEW: Sync with GitHub on startup to regain "Memory"
+    try:
+        repo = git.Repo(BASE_DIR)
+        origin = repo.remotes.origin
+        origin.pull('main') # Download everything you've ever saved
+        print("System: Project history restored from GitHub.")
+    except Exception as e:
+        print(f"System: Startup sync failed: {e}")
+
     startup_greeting()
-    app.run(host='0.0.0.0', port=59059, debug=False)
+    port = int(os.environ.get("PORT", 10000))
+    serve(app, host='0.0.0.0', port=port)
