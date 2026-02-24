@@ -344,3 +344,12 @@ recognition.onerror = (event) => {
     console.error("Speech Error:", event.error);
     document.getElementById('status').innerText = "Mic Error: " + event.error;
 };
+function sendCommand() {
+    let userInput = document.querySelector('input').value;
+    
+    // This line puts the text onto your UI
+    document.getElementById('chat-display').innerText = "You said: " + userInput;
+    
+    // Your existing code to log to missionlog and process the AI response
+    console.log("Mission Log: " + userInput);
+}
