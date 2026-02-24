@@ -37,6 +37,7 @@
 
 }
 
+
 #eva-orb {
     width: 150px;
     height: 150px;
@@ -124,6 +125,8 @@ button {
 /* --- Navigation Bar Layout --- */
 /* --- Global Reset & Background --- */
 body {
+    align-items: center;
+    justify-content: center;
     background-color: #050505;
     color: #e0e0e0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -425,4 +428,40 @@ code {
     /* Professional aero-effect */
     pointer-events: none;
     /* User clicks pass through to the dashboard */
+}
+
+#dashboard-section {
+
+    align-items: center;
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+}
+
+#input-container {
+    display: flex;
+    justify-content: center
+}
+
+.page-section {
+
+    flex-direction: column;
+    align-items: center;
+    /* This prevents the left-shift */
+    justify-content: flex-start;
+    width: 100%;
+    margin: 0 auto;
+    /* Centers the container horizontally */
+    text-align: center;
+}
+
+#dashboard-section[style*="display: block"],
+#dashboard-section[style*="display: flex"] {
+    display: flex !important;
+    /* Overrides default block behavior */
 }
