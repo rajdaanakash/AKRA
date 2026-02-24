@@ -1,4 +1,5 @@
-function verifyPin() {
+let active_mission = "default";
+        function verifyPin() {
             const pin = document.getElementById('pin-input').value;
             const SECRET_PIN = "2255"; // Set your 4-digit PIN here
 
@@ -9,6 +10,92 @@ function verifyPin() {
                 alert("Unauthorized Access. Connection Terminated.");
             }
         }
+        async function fetchDirectories() {
+            try {
+                const response = await fetch('/list-directories');
+                const data = await response.json();
+                const listContainer = document.getElementById('directory-list');
+                listContainer.innerHTML = ''; // Clear current list
+
+                data.directories.forEach(dir => {
+                    const btn = document.createElement('button');
+                    btn.className = 'dir-btn';
+                    btn.innerText = dir.replace(/_/g, ' ').toUpperCase();
+                    btn.onclick = () => switchWorkspace(dir);
+                    listContainer.appendChild(btn);
+                });
+            } catch (err) {
+                console.error("Failed to load directories:", err);
+            }
+        }
+
+        // 2. Switch the active mission and launch VS Code
+        async function switchWorkspace(dirName) {
+            // Update the local variable when you switch
+            active_mission = dirName;
+
+            await fetch('/switch-workspace', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ directory: dirName })
+            });
+            loadMissionLogs();
+        }
+
+
+        // STEP 1: Only load the list of filenames
+        // STEP 1: Show the List, Hide the Content
+        async function loadMissionLogs() {
+            const response = await fetch('/get-mission-logs');
+            const data = await response.json();
+            const chatContainer = document.getElementById('chat-history-display');
+
+            if (chatContainer) {
+                chatContainer.innerHTML = `
+                    <div id="file-explorer-view">
+                        <h3 style="color: #00d2ff;">Sector: ${active_mission}</h3>
+                        <div id="file-list"></div>
+                    </div>
+                    <div id="file-content-view" style="display: none;"></div>
+                `;
+
+                const fileList = document.getElementById('file-list');
+                data.logs.forEach(log => {
+                    const btn = document.createElement('button');
+                    btn.className = "file-explorer-btn";
+                    btn.innerHTML = `📄 ${log.name}`;
+                    btn.onclick = () => viewFileContent(log.name);
+                    fileList.appendChild(btn);
+                });
+            }
+        }
+
+        // STEP 2: Show the Content, Hide the List + Add Back Button
+        async function viewFileContent(fileName) {
+            const listView = document.getElementById('file-explorer-view');
+            const contentView = document.getElementById('file-content-view');
+
+            const response = await fetch(`/read-file?name=${fileName}`);
+            const data = await response.json();
+
+            listView.style.display = "none"; // Hide the list
+            contentView.style.display = "block"; // Show the content
+
+            contentView.innerHTML = `
+                <button class="back-btn" onclick="closeFileView()">⬅ Back to Sector</button>
+                <h4 style="color: #00d2ff;">File: ${fileName}</h4>
+                <pre class="code-preview-block">${data.content}</pre>
+            `;
+        }
+
+        // STEP 3: The "Clean UI" Trigger
+        function closeFileView() {
+            document.getElementById('file-explorer-view').style.display = "block";
+            document.getElementById('file-content-view').style.display = "none";
+        }
+
+        // Auto-load directories when the page opens
+        window.onload = fetchDirectories;
         // --- Navigation Logic ---
         function showSection(sectionId) {
             document.querySelectorAll('.page-section').forEach(s => s.style.display = 'none');
@@ -84,41 +171,19 @@ function verifyPin() {
 
         // --- NEW: History & Notes Loaders ---
         function loadHistory() {
-            // 1. Fetch only the newest data
+            // Adding ?v= + new Date().getTime() makes the URL unique every time
             fetch('/task_history.json?v=' + new Date().getTime())
                 .then(response => response.json())
                 .then(data => {
                     const list = document.getElementById('history-list');
-                    if (!list) return;
-
-                    // 2. Clear only the necessary area to save GPU cycles
-                    list.innerHTML = "";
-
-                    // 3. LIMIT: Only show the last 15 items to prevent system lag
-                    const recentData = data.slice(-15).reverse();
-
-                    // 4. Fragment rendering: This is much lighter on your LOQ's VRMs
-                    const fragment = document.createDocumentFragment();
-
-                    recentData.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = "log-item";
-
-                        // Use textContent for the body to prevent malicious HTML rendering
-                        div.innerHTML = `
+                    list.innerHTML = data.reverse().map(item => `
+                <div class="log-item">
                     <small style="color: #00d2ff;">${item.timestamp}</small><br>
                     <strong>User:</strong> ${item.user}<br>
-                    <strong>EVA:</strong> <span class="eva-resp">${item.eva}</span>
-                `;
-                        fragment.appendChild(div);
-
-                        const hr = document.createElement('hr');
-                        hr.className = "log-divider";
-                        fragment.appendChild(hr);
-                    });
-
-                    // 5. Final Paint: One single update to the screen instead of many
-                    list.appendChild(fragment);
+                    <strong>EVA:</strong> ${item.eva}
+                </div>
+                <hr class="log-divider">
+            `).join('');
                 })
                 .catch(err => console.log("History Load Error:", err));
         }

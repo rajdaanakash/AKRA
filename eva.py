@@ -602,6 +602,86 @@ def update_io():
     io_config.update(request.get_json())
     return jsonify({"status": "success", "config": io_config})
 
+@app.route('/list-directories', methods=['GET'])
+def list_directories():
+    try:
+        # Scans your history folder for project directories
+        dirs = [d for d in os.listdir(HISTORY_DIR) if os.path.isdir(os.path.join(HISTORY_DIR, d))]
+        return jsonify({"directories": dirs})
+    except Exception as e:
+        return jsonify({"directories": [], "error": str(e)})
+    
+
+@app.route('/switch-workspace', methods=['POST']) # Ensure 'POST' is in the methods list
+def switch_workspace():
+    global active_mission
+    try:
+        data = request.get_json()
+        new_folder = data.get("directory")
+        
+        if new_folder:
+            # Update the global mission context
+            active_mission = new_folder.replace(" ", "_").lower()
+            
+            # Ensure the directory physically exists
+            project_path = set_active_project(active_mission)
+            
+            print(f"System: Switched to workspace -> {active_mission}")
+            return jsonify({
+                "status": "success", 
+                "message": f"Workspace switched to {active_mission}",
+                "active": active_mission
+            })
+    except Exception as e:
+        print(f"Workspace Switch Error: {e}")
+        
+    return jsonify({"status": "error", "message": "Invalid request"}), 400
+@app.route('/get-mission-logs', methods=['GET'])
+def get_mission_logs():
+    global active_mission
+    mission_path = os.path.join(HISTORY_DIR, active_mission)
+    
+    if not os.path.exists(mission_path):
+        return jsonify({"logs": []})
+        
+    try:
+        files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
+        # Sort by newest first
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
+        
+        log_data = []
+        for file_name in files[:10]: 
+            try:
+                # Use 'errors="ignore"' to handle files with weird characters
+                with open(os.path.join(mission_path, file_name), "r", encoding="utf-8", errors="ignore") as f:
+                    log_data.append({
+                        "name": file_name,
+                        "content": f.read(2000) 
+                    })
+            except Exception as file_err:
+                print(f"Skipping file {file_name} due to error: {file_err}")
+                continue # Keep going even if one file fails
+                
+        return jsonify({"logs": log_data})
+    except Exception as e:
+        print(f"Major log retrieval error: {e}")
+        return jsonify({"logs": [], "error": str(e)}), 200 # Return 200 to stop the UI from breaking
+    
+@app.route('/read-file', methods=['GET'])
+def read_file():
+    global active_mission
+    file_name = request.args.get('name')
+    file_path = os.path.join(HISTORY_DIR, active_mission, file_name)
+    
+    try:
+        # Using 'errors="ignore"' to keep the system stable
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            content = f.read()
+        return jsonify({"content": content})
+    except Exception as e:
+        return jsonify({"content": f"Error reading file: {str(e)}"}), 500
+
+
 
 @app.route('/run-eva', methods=['POST'])
 def run_eva():
