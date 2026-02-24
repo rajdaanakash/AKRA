@@ -60,18 +60,10 @@
 
     <div id="dashboard-section" class="page-section">
         <div id="eva-orb" onclick="toggleListening()"></div>
-        <div class="eva-container">
-            <p class="eva-text">Click the orb to talk to Eva</p>
-            <div class="eva-container">
-                <p id="chat-display">Waiting for command...</p>
-
-                <div class="orb"></div>
-            </div>
-
-        </div>
+        <div id="status">Click the orb to talk to Eva</div>
         <div id="transcript"></div>
 
-
+        
 
         <div class="input-container">
             <input type="text" id="userPrompt" placeholder="Ask EVA anything, Sir..."
@@ -102,12 +94,9 @@
         <button onclick="loadNotes()" class="refresh-btn">📚 Sync Notes</button>
     </div>
     <div id="safety-disclaimer">
-        ⚠️ <span style="color: #00d2ff;">SECURE PROTOCOL:</span> EVA is AI it can make mistakes. Verify all mission
-        critical
+        ⚠️ <span style="color: #00d2ff;">SECURE PROTOCOL:</span> EVA is AI it can make mistakes. Verify all mission critical
         data, Sir.
     </div>
 
     <script src="script.js"></script>
 </body>
-
-</html>

@@ -1,12 +1,14 @@
 #main-container {
     width: 100%;
     max-width: 800px;
+    /* Limits width for readability on laptop screens */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 30px;
-    /* Increased gap slightly for a cleaner look */
-    margin: 0 auto;
+    gap: 20px;
+    /* This ensures the container stays in the middle 
+       but expands downwards as EVA responds */
+    margin: auto 0;
 }
 
 .orb-container {
@@ -21,22 +23,10 @@
     }
 }
 
-.page-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px;
-    /* ADD THIS: Padding must be larger than the footer height */
-    padding-bottom: 80px;
-    min-height: 100vh;
-    box-sizing: border-box;
-}
-
 #io-panel {
     display: flex;
 
 }
-
 
 #eva-orb {
     width: 150px;
@@ -125,8 +115,6 @@ button {
 /* --- Navigation Bar Layout --- */
 /* --- Global Reset & Background --- */
 body {
-    align-items: center;
-    justify-content: center;
     background-color: #050505;
     color: #e0e0e0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -173,7 +161,16 @@ body {
 }
 
 /* --- Clean Dashboard Layout --- */
-
+.page-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    /* Changed from fixed height */
+    overflow-y: visible;
+    /* Let the body handle the main scroll */
+}
 
 /* --- The Orb --- */
 #eva-orb {
@@ -410,7 +407,6 @@ code {
 }
 
 #safety-disclaimer {
-    height: 13px;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -429,88 +425,4 @@ code {
     /* Professional aero-effect */
     pointer-events: none;
     /* User clicks pass through to the dashboard */
-}
-
-#dashboard-section {
-
-    align-items: center;
-    width: 100%;
-    max-width: 900px;
-    margin: 0 auto;
-}
-
-.container {
-    display: flex;
-    justify-content: center;
-}
-
-#input-container {
-    display: flex;
-    justify-content: center
-}
-
-.page-section {
-
-    flex-direction: column;
-    align-items: center;
-    /* This prevents the left-shift */
-    justify-content: flex-start;
-    width: 100%;
-    margin: 0 auto;
-    /* Centers the container horizontally */
-    text-align: center;
-}
-
-#dashboard-section[style*="display: block"],
-#dashboard-section[style*="display: flex"] {
-    display: flex !important;
-    /* Overrides default block behavior */
-}
-
-#status,
-#transcript,
-.log-item {
-    text-align: left;
-    /* Aligns the speaking text to the left */
-    width: 100%;
-    /* Ensures it takes up the full container width */
-    max-width: 800px;
-    /* Matches your main container for readability */
-    margin: 20px 0;
-    /* Adds vertical spacing */
-    padding: 0 15px;
-    /* Prevents text from hitting the screen edges */
-    line-height: 1.6;
-    /* Professional spacing for long bios */
-}
-
-/* Keeps the "Eva:" header bold and distinct */
-#status b,
-#status strong {
-    color: #00d2ff;
-    display: block;
-    margin-bottom: 10px;
-}
-.parent-container {
-  display: flex;
-  flex-direction: column; /* Stacks elements vertically */
-  align-items: center;    /* Centers elements horizontally */
-  justify-content: center; /* Centers elements vertically if container has height */
-  text-align: center;      /* Ensures the text itself is centered */
-}
-
-.eva-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;    /* Horizontal center */
-  justify-content: center; /* Vertical center */
-  width: 100%;            /* Ensure it spans the whole screen */
-  text-align: center;     /* Centers the text inside its own box */
-  margin: 0 auto;
-}
-
-.eva-text {
-  width: 100%;
-  display: block;
-  margin-bottom: 20px;    /* Space between text and orb */
 }
