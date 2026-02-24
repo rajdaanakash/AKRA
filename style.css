@@ -1,14 +1,12 @@
 #main-container {
     width: 100%;
     max-width: 800px;
-    /* Limits width for readability on laptop screens */
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    /* This ensures the container stays in the middle 
-       but expands downwards as EVA responds */
-    margin: auto 0;
+    gap: 30px;
+    /* Increased gap slightly for a cleaner look */
+    margin: 0 auto;
 }
 
 .orb-container {
@@ -21,6 +19,17 @@
         max-width: 95%;
         margin-top: 20px;
     }
+}
+
+.page-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    /* Centers content vertically now that shortcuts are gone */
+    align-items: center;
+    padding: 20px;
+    min-height: calc(100vh - 80px);
+    overflow-y: auto;
 }
 
 #io-panel {
@@ -161,16 +170,7 @@ body {
 }
 
 /* --- Clean Dashboard Layout --- */
-.page-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    min-height: calc(100vh - 80px);
-    /* Changed from fixed height */
-    overflow-y: visible;
-    /* Let the body handle the main scroll */
-}
+
 
 /* --- The Orb --- */
 #eva-orb {
