@@ -24,12 +24,12 @@
 .page-section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    /* Centers content vertically now that shortcuts are gone */
     align-items: center;
-    padding: 20px;
-    min-height: calc(100vh - 80px);
-    overflow-y: auto;
+    padding-top: 20px;
+    /* ADD THIS: Padding must be larger than the footer height */
+    padding-bottom: 80px;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
 #io-panel {
@@ -410,6 +410,7 @@ code {
 }
 
 #safety-disclaimer {
+    height: 13px;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -464,4 +465,29 @@ code {
 #dashboard-section[style*="display: flex"] {
     display: flex !important;
     /* Overrides default block behavior */
+}
+
+#status,
+#transcript,
+.log-item {
+    text-align: left;
+    /* Aligns the speaking text to the left */
+    width: 100%;
+    /* Ensures it takes up the full container width */
+    max-width: 800px;
+    /* Matches your main container for readability */
+    margin: 20px 0;
+    /* Adds vertical spacing */
+    padding: 0 15px;
+    /* Prevents text from hitting the screen edges */
+    line-height: 1.6;
+    /* Professional spacing for long bios */
+}
+
+/* Keeps the "Eva:" header bold and distinct */
+#status b,
+#status strong {
+    color: #00d2ff;
+    display: block;
+    margin-bottom: 10px;
 }
