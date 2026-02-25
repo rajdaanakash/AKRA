@@ -347,6 +347,40 @@ def listen():
         return query
     except Exception:
         return ""
+    
+
+
+def deep_scan_company(url):
+    """EVA visits the specific company site to gather deep intelligence"""
+    try:
+        response = requests.get(url, timeout=5)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Extract text from the main sections
+        page_text = soup.get_text()
+        # Clean up whitespace
+        clean_text = " ".join(page_text.split())
+        
+        return clean_text[:2000] # Feed first 2000 characters to the AI brain
+    except Exception as e:
+        return f"Sector scan failed: {e}"
+    
+def deep_web_search(query):
+    # 1. Get initial search results
+    results = DDGS().text(query, max_results=10)
+    
+    deep_intelligence = ""
+    for res in results:
+        url = res.get('href')
+        title = res.get('title')
+        print(f"System: Deep Scanning {url}...")
+        
+        # 2. Extract specific webpage content
+        site_data = deep_scan_company(url) 
+        deep_intelligence += f"\nSOURCE: {title} ({url})\nCONTENT: {site_data}\n"
+    
+    # 3. Feed the rich data to the AI Brain
+    return get_ai_response(f"Based on this deep scan: {deep_intelligence}, answer: {query}")
 
 
 def set_active_project(name):
@@ -447,7 +481,8 @@ def process_eva_command(query):
             f"Live Web Data: {raw_data}.\n\n"
             "CRITICAL: Prioritize information matching the current year/month above. "
             "If the web results mention a name change or update from 2024-2026, "
-            "provide that as the definitive answer."
+            f"provide that as the definitive answer, and don't mention {current_date_context} for every chat"
+            "when ever website or comapanies is asked than provide data locally as in prompt mention and provide them as list form than also read content."
         )
         
         response_text = get_ai_response(prompt)
@@ -597,7 +632,8 @@ def process_eva_command(query):
             f"User Question: {query}\n\n"
             f"Live Web Research: {raw_web_data}\n\n"
             "INSTRUCTION: Prioritize official latest information, searches, links, current affairs, news, name changes or facts after 2024 to since today "
-            "If the question is about India, ensure the response is 100% accurate as of today."
+            "If the question is about India, ensure the response is 100% accurate as of today. and don't mention month in every conversation and if about movies or movie list asked than provide recent data to them."
+            "whenever nearby comapnies or website is asked than provide data according to local as prompt said."
         )
         
         response_text = get_ai_response(prompt)
