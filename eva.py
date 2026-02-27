@@ -395,12 +395,156 @@ def set_active_project(name):
     
     return project_path
 
+
+#for current afair and api is used here
+def fetch_external_data(category, query):
+    tm_out = (5, 15)
+    
+    # --- MOVIE SECTION ---
+    if category == "new_movies":
+        try:
+            # --- 1. PRIMARY: TMDB Discover (Filters by Nationality) ---
+            key = os.environ.get('TMDB_API_KEY')
+            
+            # Detect nationality from your voice command
+            # If you say "Indian", use 'hi' (Hindi); else default to 'en' (Hollywood)
+            lang = "hi" if "indian" in query or "bollywood" in query else "en"
+            
+            # Discover endpoint allows language + region filtering
+            url = (f"https://api.themoviedb.org/3/discover/movie?api_key={key}"
+                   f"&region=IN&with_original_language={lang}&sort_by=primary_release_date.desc")
+            
+            response = requests.get(url, timeout=(5, 10))
+            response.raise_for_status()
+            res = response.json()
+            movies = res.get('results', [])[:10]
+            
+            if movies:
+                return "\n".join([f"- {m['title']} (Released: {m['release_date']})" for m in movies])
+            else:
+                raise Exception("No specific nationality results found on TMDB.")
+
+        except Exception as e:
+            # --- 2. BACKUP: OMDb (Triggered if TMDB fails or is empty) ---
+            try:
+                omdb_key = os.environ.get('OMDB_API_KEY')
+                # For OMDb, we search for the year 2026 + nationality keyword
+                search_term = "Indian 2026" if "indian" in query else "2026"
+                
+                res = requests.get(f"http://www.omdbapi.com/?s={search_term}&type=movie&apikey={omdb_key}", timeout=5).json()
+                search_results = res.get('Search', [])
+                
+                if search_results:
+                    return "Sir, TMDB is unresponsive. OMDb Backup results:\n" + \
+                           "\n".join([f"- {m['Title']} ({m['Year']})" for m in search_results[:5]])
+                return "All cinematic data streams are currently offline, Sir."
+            except:
+                return "Emergency: Movie data sector total failure."
+              
+    # --- NEWS SECTION ---
+    elif category == "news":
+        # Option 1: NewsData.io (Primary)
+        try:
+            key = os.environ.get('NEWSDATA_KEY')
+            url = f"https://newsdata.io/api/1/news?apikey={key}&q={query}&country=in"
+            res = requests.get(url, timeout=10).json()
+            # Corrected Indexing: Extract titles from the list
+            titles = [art['title'] for art in res.get('results', [])[:5]]
+            return "\n".join(titles) if titles else "No headlines found."
+        except:
+            # Option 2: NewsAPI.org (Backup)
+            try:
+                key = os.environ.get('NEWSAPI_ORG_KEY')
+                res = requests.get(f"https://newsapi.org/v2/everything?q={query}&apiKey={key}", timeout=10).json()
+                titles = [art['title'] for art in res.get('articles', [])[:5]]
+                return "\n".join(titles)
+            except:
+                return "News services are currently unavailable."
+
+    # --- COMPANY SEARCH SECTION ---
+    elif category == "find_near":
+        try:
+            # --- STAGE 1: Primary - MapTiler POI ---
+            key = os.environ.get('MAPTILER_API_KEY')
+            maptiler_url = f"https://api.maptiler.com/geocoding/{query}.json?key={key}&types=poi&proximity=ip"
+            
+            response = requests.get(maptiler_url, timeout=5)
+            res = response.json()
+            features = res.get('features', [])
+            
+            if isinstance(features, list) and len(features) > 0:
+                results = [f"🏢 {f.get('text')}\n   📍 {f.get('place_name')}" for f in features[:5]]
+                return "\n\n".join(results)
+            
+            # --- STAGE 2: Backup - LocationIQ ---
+            # This triggers if MapTiler returns no businesses
+            liq_key = os.environ.get('LOCATION_IQ_KEY')
+            if liq_key:
+                # Use 'search' endpoint for business queries
+                liq_url = f"https://us1.locationiq.com/v1/search?key={liq_key}&q={query}&format=json"
+                liq_res = requests.get(liq_url, timeout=5).json()
+                
+                if isinstance(liq_res, list) and len(liq_res) > 0:
+                    results = [f"🏢 {r.get('display_name')}" for r in liq_res[:5]]
+                    return "Sir, MapTiler was quiet, but my LocationIQ backup found these:\n\n" + "\n\n".join(results)
+
+            # --- STAGE 3: Final Fallback - Web Search ---
+            return f"Sir, I couldn't find registered API markers. Initiating web scan:\n\n{web_search(query)}"
+
+        except Exception as e:
+            return f"Mapping sector error: {str(e)}"
+
 def process_eva_command(query):
-    global active_mission # Use only this one global
+    global active_mission
     query = query.lower()
     command_handled = False
     global response_text
     response_text = ""
+
+    # --- 1. MOVIE & SHOW LOGIC ---
+    if "new movies" in query or "latest movies" in query or "released today" in query:
+        # Trigger the 'new_movies' category we built earlier
+        data = fetch_external_data("new_movies", "")
+        response_text = f"Sir, here are the latest cinematic releases:\n{data}"
+        command_handled = True
+        return response_text
+
+    # --- 2. NEARBY COMPANIES & LOCATION LOGIC ---
+    elif "list" in query or "find" in query:
+        # Example query: "list website designers in Lucknow"
+        search_target = query.replace("list", "").replace("find", "").strip()
+        # This will now call fetch_external_data with types=poi active
+        data = fetch_external_data("find_near", search_target)
+        response_text = f"Sector scan complete. Here are the companies I found:\n\n{data}"
+        return response_text
+    
+    # elif "movie" in query or "show" in query:
+    #     # Improved extraction: "tell me about the movie inception" -> "inception"
+    #     movie_name = query.replace("search movie", "").replace("movie", "").replace("show", "").strip()
+    #     if movie_name:
+    #         data = fetch_external_data("movies", movie_name)
+    #         response_text = f"Found these details: {data}"
+    #         command_handled = True
+    #         return response_text
+
+    # --- 2. NEWS & CURRENT AFFAIRS LOGIC ---
+    elif "news" in query or "current affairs" in query:
+        topic = query.replace("latest news about", "").replace("news", "").replace("current affairs", "").strip()
+        if not topic: topic = "India" # Default to India if no topic specified
+        data = fetch_external_data("news", topic)
+        response_text = f"Here is the latest headline: {data}"
+        command_handled = True
+        return response_text
+
+    # --- 3. MAPS & LOCATION LOGIC ---
+    elif "where is" in query or "map of" in query or "location of" in query:
+        location = query.replace("where is", "").replace("map of", "").replace("location of", "").strip()
+        if location:
+            map_url = fetch_external_data("map", location)
+            webbrowser.open(map_url)
+            response_text = f"Locating {location} on the map for you, Sir."
+            command_handled = True
+            return response_text
 
     # --- PROJECT CREATION ---
     if "create new project" in query or "create new directory" in query:
