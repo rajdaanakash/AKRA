@@ -63,13 +63,15 @@
         <div id="status">Click the orb to talk to E.V.A.</div>
         <div id="transcript"></div>
 
-        
+
 
         <div class="input-container">
-            <input type="text" id="userPrompt" placeholder="Ask EVA anything, Sir..."
-                onkeydown="if(event.key==='Enter') sendTextPrompt()">
+            <input type="text" id="userPrompt" placeholder="Ask EVA anything, Sir...">
+            <button onclick="uploadAndAnalyze()" class="send-btn">📸 Vision</button>
             <button onclick="sendTextPrompt()" class="send-btn">Send Command</button>
         </div>
+
+
         <br>
 
         <div class="controls">
@@ -94,7 +96,8 @@
         <button onclick="loadNotes()" class="refresh-btn">📚 Sync Notes</button>
     </div>
     <div id="safety-disclaimer">
-        ⚠️ <span style="color: #00d2ff;">SECURE PROTOCOL:</span> E.V.A. is AI it can make mistakes. Verify all mission critical
+        ⚠️ <span style="color: #00d2ff;">SECURE PROTOCOL:</span> E.V.A. is AI it can make mistakes. Verify all mission
+        critical
         data...
     </div>
 

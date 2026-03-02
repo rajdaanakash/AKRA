@@ -18,6 +18,7 @@ from waitress import serve
 import git
 import re
 import html
+from fpdf import FPDF
 
 # --- CONFIGURATION ---
 
@@ -396,6 +397,22 @@ def set_active_project(name):
     return project_path
 
 
+def analyze_image_qa(image_data, query):
+    """Sends image to Hugging Face to answer questions about screenshots/photos"""
+    api_url = "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large"
+    headers = {"Authorization": f"Bearer {os.environ.get('HUGGINGFACE_TOKEN')}"}
+    
+    # Clean the base64 string if it comes from the frontend
+    if "base64," in image_data:
+        image_data = image_data.split("base64,")[1]
+
+    try:
+        response = requests.post(api_url, headers=headers, json={"inputs": image_data}, timeout=15)
+        result = response.json()
+        return result[0].get('generated_text', "Sir, the visual data is blurred. I cannot see clearly.")
+    except Exception as e:
+        return f"Visual Sensor Error: {e}"
+
 #for current afair and api is used here
 def fetch_external_data(category, query):
     tm_out = (5, 15)
@@ -493,6 +510,20 @@ def fetch_external_data(category, query):
 
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
+        
+def generate_mission_pdf(content):
+    """Converts text logs into a PDF for your BSc studies"""
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("helvetica", size=12)
+    # Remove emojis/special chars that FPDF might hate
+    clean_text = content.encode('latin-1', 'ignore').decode('latin-1')
+    pdf.multi_cell(0, 10, txt=clean_text)
+    
+    filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
+    pdf.output(filename)
+    return filename
+
 
 def process_eva_command(query):
     global active_mission
@@ -584,6 +615,21 @@ def process_eva_command(query):
                     return f"Interaction archived in the {active_mission} sector and synced to GitHub, Sir."
                 else:
                     return f"Archived locally, but GitHub sync failed. Check Render logs."
+                
+    if "generate image" in query or "draw" in query:
+        prompt = query.replace("generate image", "").replace("draw", "").strip()
+        img_url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}?nologo=true"
+        return f"Visualizing: {prompt}. Source: {img_url}"
+    
+    if "create pdf" in query or "save as pdf" in query:
+        # It takes the last response and makes a PDF
+        history = []
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history = json.load(f)
+            text_to_save = history[-1]['eva'] if history else "No recent data."
+            pdf_name = generate_mission_pdf(text_to_save)
+            return f"Mission report compiled into PDF: {pdf_name}. Check your root directory, Sir."
 
     # --- ENHANCED SCRAPING TRIGGER ---
     if "scrape" in query or "read the page" in query:

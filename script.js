@@ -344,3 +344,34 @@ recognition.onerror = (event) => {
     console.error("Speech Error:", event.error);
     document.getElementById('status').innerText = "Mic Error: " + event.error;
 };
+
+async function uploadAndAnalyze() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        document.getElementById('status').innerText = "Eva: Processing visual data...";
+
+        reader.onload = async () => {
+            const base64Image = reader.result;
+            const userQuery = document.getElementById('userPrompt').value || "What is in this image?";
+
+            const res = await fetch('/run-eva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "transcript": `Analyze image: ${userQuery}`,
+                    "image_data": base64Image
+                })
+            });
+            const data = await res.json();
+            handleEVAResponse(data);
+        };
+        reader.readAsDataURL(file);
+    };
+    fileInput.click();
+}
