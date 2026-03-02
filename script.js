@@ -99,23 +99,32 @@ function closeFileView() {
 window.onload = fetchDirectories;
 // --- Navigation Logic ---
 function showSection(sectionId) {
-    // 1. Hide all sections first
-    document.querySelectorAll('.page-section').forEach(s => {
-        s.style.display = 'none';
+    // 1. Get all page sections
+    const sections = ['dashboard', 'history', 'notes'];
+    
+    sections.forEach(s => {
+        const element = document.getElementById(s + '-section');
+        if (element) {
+            // Hide everything first
+            element.style.display = 'none';
+        }
     });
 
-    // 2. Reveal the target section
+    // 2. Reveal the specific section you clicked
     const target = document.getElementById(sectionId + '-section');
     if (target) {
-        // Use 'flex' instead of 'block' to keep the Orb centered
-        target.style.display = 'flex';
+        // Use 'flex' for the dashboard to keep the Orb centered, 
+        // but 'block' for history/notes so they scroll properly.
+        target.style.display = (sectionId === 'dashboard') ? 'flex' : 'block';
     }
 
-    // 3. Trigger specific data loads
+    // 3. Trigger data loads
     if (sectionId === 'history') loadHistory();
     if (sectionId === 'notes') loadNotes();
+    
+    // 4. Scroll to top so you don't stay at the bottom of the page
+    window.scrollTo(0, 0);
 }
-
 // --- Existing Core Functions ---
 function sendShortcut(command) {
     fetch('/run-shortcut', {
@@ -379,8 +388,6 @@ function handleEVAResponse(data) {
         responseText = `Sir, your Mission Report is ready. <br><br> 
                         <a href="/download/${fileName}" class="send-btn" style="text-decoration:none; display:inline-block;">📥 Download PDF</a>`;
         
-        // Optional: Automatically trigger the download
-        window.location.href = `/download/${fileName}`;
     }
 
     document.getElementById('status').innerText = "Eva: Analysis Complete.";

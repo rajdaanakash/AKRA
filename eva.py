@@ -337,18 +337,24 @@ def log_task(query, response):
         print(f"Logging Error: {e}")
 
 def listen():
-    r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Listening...")
-        r.pause_threshold = 0.8
-        audio = r.listen(source)
-    try:
-        query = r.recognize_google(audio, language='en-in')
-        print(f"User: {query}")
-        return query
-    except Exception:
+    # 1. Check if running on Render cloud
+    if os.environ.get("RENDER"):
+        print("System: Mic bypassed in Cloud environment.")
         return ""
-    
+
+    # 2. Local hardware logic (only runs on your laptop)
+    r = sr.Recognizer()
+    try:
+        with sr.Microphone() as source:
+            print("Listening...")
+            r.pause_threshold = 0.8
+            audio = r.listen(source)
+            query = r.recognize_google(audio, language='en-in')
+            print(f"User: {query}")
+            return query
+    except Exception as e:
+        print(f"Mic Error: {e}")
+        return ""
 
 
 def deep_scan_company(url):
