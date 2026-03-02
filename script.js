@@ -99,30 +99,24 @@ function closeFileView() {
 window.onload = fetchDirectories;
 // --- Navigation Logic ---
 function showSection(sectionId) {
-    // 1. Get all page sections
+    // Hide ALL sections first
     const sections = ['dashboard', 'history', 'notes'];
-    
-    sections.forEach(s => {
-        const element = document.getElementById(s + '-section');
-        if (element) {
-            // Hide everything first
-            element.style.display = 'none';
-        }
+    sections.forEach(id => {
+        const el = document.getElementById(id + '-section');
+        if (el) el.style.display = 'none';
     });
 
-    // 2. Reveal the specific section you clicked
+    // Show ONLY the requested section
     const target = document.getElementById(sectionId + '-section');
     if (target) {
-        // Use 'flex' for the dashboard to keep the Orb centered, 
-        // but 'block' for history/notes so they scroll properly.
         target.style.display = (sectionId === 'dashboard') ? 'flex' : 'block';
     }
 
-    // 3. Trigger data loads
+    // Load data for specific sections
     if (sectionId === 'history') loadHistory();
     if (sectionId === 'notes') loadNotes();
-    
-    // 4. Scroll to top so you don't stay at the bottom of the page
+
+    // Scroll to top so the new view is clear
     window.scrollTo(0, 0);
 }
 // --- Existing Core Functions ---
@@ -381,27 +375,21 @@ async function toggleListening() {
 // --- HIGHLIGHTED CHANGE: UNIFIED RESPONSE HANDLER ---
 function handleEVAResponse(data) {
     let responseText = data.response;
+    const chatResults = document.getElementById('chat-results-area');
 
-    // Check if Eva just created a PDF
+    // Turn the raw code into a button
     if (responseText.includes("MISSION_PDF_READY:")) {
         const fileName = responseText.split(":")[1];
-        responseText = `Sir, your Mission Report is ready. <br><br> 
-                        <a href="/download/${fileName}" class="send-btn" style="text-decoration:none; display:inline-block;">📥 Download PDF</a>`;
-        
+        responseText = `Sir, your Mission Report is ready.<br><br>
+                        <a href="/download/${fileName}" target="_blank" class="send-btn" style="text-decoration:none;">📄 Download PDF</a>`;
     }
 
-    document.getElementById('status').innerText = "Eva: Analysis Complete.";
+    // Inject the result into the specific results area
+    if (chatResults) {
+        chatResults.innerHTML = `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
+    }
     
-    // Use innerHTML instead of innerText so the Download link works
-    const chatDisplay = document.getElementById('chat-history-display');
-    if(chatDisplay) {
-        chatDisplay.innerHTML += `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
-    }
-
-    if (data.audio === "frontend") {
-        speakOnBrowser(data.response.replace(/<[^>]*>?/gm, '')); // Clean HTML for voice
-    }
-    loadHistory();
+    document.getElementById('status').innerText = "Eva: Task Complete.";
 }
 function speakOnBrowser(text) {
     const synth = window.speechSynthesis;
