@@ -966,14 +966,28 @@ def startup_greeting():
     speak(f"{greeting} Sir. Systems are nominal. EVA is online.")
 
 if __name__ == "__main__":
-    # NEW: Sync with GitHub on startup to regain "Memory"
+    # NEW: Secure Sync Protocol for Linux Cloud Environments
     try:
         repo = git.Repo(BASE_DIR)
-        origin = repo.remotes.origin
-        origin.pull('main') # Download everything you've ever saved
-        print("System: Project history restored from GitHub.")
+        
+        # 1. Secure Credentials for this session
+        token = os.environ.get("GITHUB_TOKEN")
+        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        
+        if 'origin' in repo.remotes:
+            origin = repo.remote(name='origin')
+            origin.set_url(repo_url)
+        else:
+            origin = repo.create_remote('origin', repo_url)
+
+        # 2. FORCE SYNC: Fetch and Reset instead of just Pulling
+        print("System: Initiating Deep Sync with GitHub...")
+        origin.fetch()
+        repo.git.reset('--hard', 'origin/main') # Clears local conflicts on Render
+        
+        print("System: Project history and Neural Memory restored from GitHub.")
     except Exception as e:
-        print(f"System: Startup sync failed: {e}")
+        print(f"System: Startup sync bypass: {e}")
 
     startup_greeting()
     port = int(os.environ.get("PORT", 10000))
