@@ -388,14 +388,25 @@ function handleEVAResponse(data) {
     if (chatResults) {
         chatResults.innerHTML = `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
     }
-    
+
     document.getElementById('status').innerText = "Eva: Task Complete.";
+    // Check if we should speak through the Browser/Phone
+    if (data.audio === "frontend" || document.getElementById('speaker-select').value === "Frontend") {
+        // We strip HTML tags like <br> so the AI doesn't literally say "B R"
+        const cleanText = data.response.replace(/<[^>]*>?/gm, '');
+        speakOnBrowser(cleanText);
+    }
 }
 function speakOnBrowser(text) {
     const synth = window.speechSynthesis;
+    // If a voice is already playing, cancel it first
+    synth.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
-    // Akash, you can change pitch/rate here for your phone's voice
     utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.lang = 'en-IN'; // Uses the Indian accent you prefer
+
     synth.speak(utterance);
 }
 recognition.onstart = () => {
