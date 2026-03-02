@@ -966,29 +966,19 @@ def startup_greeting():
     speak(f"{greeting} Sir. Systems are nominal. EVA is online.")
 
 if __name__ == "__main__":
-    # NEW: Secure Sync Protocol for Linux Cloud Environments
     try:
         repo = git.Repo(BASE_DIR)
         
-        # 1. Secure Credentials for this session
-        token = os.environ.get("GITHUB_TOKEN")
-        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        # NEW: Force Git to merge without opening the text editor
+        # This prevents the "E325 ATTENTION" screen entirely.
+        repo.git.config("core.editor", "true") 
         
-        if 'origin' in repo.remotes:
-            origin = repo.remote(name='origin')
-            origin.set_url(repo_url)
-        else:
-            origin = repo.create_remote('origin', repo_url)
-
-        # 2. FORCE SYNC: Fetch and Reset instead of just Pulling
-        print("System: Initiating Deep Sync with GitHub...")
-        origin.fetch()
-        repo.git.reset('--hard', 'origin/main') # Clears local conflicts on Render
+        origin = repo.remotes.origin
+        print("System: Syncing Neural Memory...")
         
-        print("System: Project history and Neural Memory restored from GitHub.")
+        # Use --no-rebase and --no-edit to keep it automated
+        repo.git.pull('origin', 'main', no_rebase=True, no_edit=True)
+        
+        print("System: Project history restored from GitHub.")
     except Exception as e:
         print(f"System: Startup sync bypass: {e}")
-
-    startup_greeting()
-    port = int(os.environ.get("PORT", 10000))
-    serve(app, host='0.0.0.0', port=port)
