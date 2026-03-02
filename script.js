@@ -1,4 +1,5 @@
 let active_mission = "default";
+let attachedImageData = null; // Stores the image until you hit Send
 function verifyPin() {
     const pin = document.getElementById('pin-input').value;
     const SECRET_PIN = "2255"; // Set your 4-digit PIN here
@@ -134,12 +135,66 @@ function sendShortcut(command) {
         });
 }
 
-function sendTextPrompt() {
+// This only ATTACHES the image
+function uploadImage() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            attachedImageData = reader.result;
+
+            // Show the thumbnail preview
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+            previewImg.src = attachedImageData;
+            previewContainer.style.display = "block";
+
+            document.getElementById('status').innerText = `Eva: Image ready. Ask your question, Sir.`;
+        };
+        reader.readAsDataURL(file);
+    };
+    fileInput.click();
+}
+
+function clearAttachment() {
+    attachedImageData = null;
+    document.getElementById('image-preview-container').style.display = "none";
+    document.getElementById('status').innerText = "Eva: Attachment cleared.";
+}
+
+// Update sendTextPrompt to clear the preview on success
+async function sendTextPrompt() {
     const inputField = document.getElementById('userPrompt');
     const userMessage = inputField.value;
-    if (userMessage.trim() !== "") {
-        sendShortcut(userMessage);
-        inputField.value = "";
+    const status = document.getElementById('status');
+
+    if (userMessage.trim() !== "" || attachedImageData) {
+        status.innerText = "Eva: Synchronizing visual and text data...";
+
+        try {
+            const res = await fetch('/run-eva', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "transcript": userMessage,
+                    "image_data": attachedImageData
+                })
+            });
+
+            const data = await res.json();
+            handleEVAResponse(data);
+
+            // Reset everything
+            clearAttachment();
+            inputField.value = "";
+        } catch (err) {
+            status.innerText = "System Error: Failed to reach the visual core.";
+        }
     }
 }
 
@@ -316,13 +371,31 @@ async function toggleListening() {
 
 // --- HIGHLIGHTED CHANGE: UNIFIED RESPONSE HANDLER ---
 function handleEVAResponse(data) {
-    document.getElementById('status').innerText = "Eva: " + data.response;
+    let responseText = data.response;
+
+    // Check if Eva just created a PDF
+    if (responseText.includes("MISSION_PDF_READY:")) {
+        const fileName = responseText.split(":")[1];
+        responseText = `Sir, your Mission Report is ready. <br><br> 
+                        <a href="/download/${fileName}" class="send-btn" style="text-decoration:none; display:inline-block;">📥 Download PDF</a>`;
+        
+        // Optional: Automatically trigger the download
+        window.location.href = `/download/${fileName}`;
+    }
+
+    document.getElementById('status').innerText = "Eva: Analysis Complete.";
+    
+    // Use innerHTML instead of innerText so the Download link works
+    const chatDisplay = document.getElementById('chat-history-display');
+    if(chatDisplay) {
+        chatDisplay.innerHTML += `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
+    }
+
     if (data.audio === "frontend") {
-        speakOnBrowser(data.response);
+        speakOnBrowser(data.response.replace(/<[^>]*>?/gm, '')); // Clean HTML for voice
     }
     loadHistory();
 }
-
 function speakOnBrowser(text) {
     const synth = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(text);
@@ -345,33 +418,3 @@ recognition.onerror = (event) => {
     document.getElementById('status').innerText = "Mic Error: " + event.error;
 };
 
-async function uploadAndAnalyze() {
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-
-    fileInput.onchange = async (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-
-        document.getElementById('status').innerText = "Eva: Processing visual data...";
-
-        reader.onload = async () => {
-            const base64Image = reader.result;
-            const userQuery = document.getElementById('userPrompt').value || "What is in this image?";
-
-            const res = await fetch('/run-eva', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    "transcript": `Analyze image: ${userQuery}`,
-                    "image_data": base64Image
-                })
-            });
-            const data = await res.json();
-            handleEVAResponse(data);
-        };
-        reader.readAsDataURL(file);
-    };
-    fileInput.click();
-}

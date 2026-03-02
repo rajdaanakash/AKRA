@@ -65,9 +65,16 @@
 
 
 
+        <div id="image-preview-container" style="display: none; margin-bottom: 10px;">
+            <img id="image-preview" src="" alt="Thumbnail"
+                style="width: 60px; height: 60px; border-radius: 8px; border: 2px solid #00d2ff; object-fit: cover;">
+            <button onclick="clearAttachment()"
+                style="background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; position: relative; top: -45px; left: -15px;">×</button>
+        </div>
+
         <div class="input-container">
-            <input type="text" id="userPrompt" placeholder="Ask EVA anything, Sir...">
-            <button onclick="uploadAndAnalyze()" class="send-btn">📸 Vision</button>
+            <input type="text" id="userPrompt" placeholder="Ask about an image or give a command...">
+            <button onclick="uploadImage()" class="send-btn vision-btn">📎 Attach</button>
             <button onclick="sendTextPrompt()" class="send-btn">Send Command</button>
         </div>
 

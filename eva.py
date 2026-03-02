@@ -622,14 +622,17 @@ def process_eva_command(query):
         return f"Visualizing: {prompt}. Source: {img_url}"
     
     if "create pdf" in query or "save as pdf" in query:
-        # It takes the last response and makes a PDF
         history = []
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
+            
+            # Get the last AI response to put in the PDF
             text_to_save = history[-1]['eva'] if history else "No recent data."
             pdf_name = generate_mission_pdf(text_to_save)
-            return f"Mission report compiled into PDF: {pdf_name}. Check your root directory, Sir."
+            
+            # Return a message with a custom marker for the frontend to catch
+            return f"MISSION_PDF_READY:{pdf_name}"
 
     # --- ENHANCED SCRAPING TRIGGER ---
     if "scrape" in query or "read the page" in query:
@@ -920,29 +923,60 @@ def read_file():
         return jsonify({"content": f"Error reading file: {str(e)}"}), 500
 
 
-
 @app.route('/run-eva', methods=['POST'])
 def run_eva():
     data = request.get_json(silent=True) or {}
+    image_data = data.get("image_data")
+    user_query = data.get("transcript", "").strip()
     
-    if io_config["mic"] == "Backend":
-        query = listen()
-    else:
-        query = data.get("transcript", "")
+    response_text = ""
 
-    if query:
-        response_text = process_eva_command(query)
+    # --- 1. PRIORITY: IMAGE ANALYSIS ---
+    # If an image is present, we ignore the mic and process the visual data
+    if image_data:
+        prompt = user_query if user_query else "Describe this image in detail."
+        try:
+            # Note: Ensure analyze_image_qa handles the base64 string correctly
+            response_text = analyze_image_qa(image_data, prompt)
+            response_text = f"[Visual Analysis] {response_text}"
+        except Exception as e:
+            response_text = f"Visual Core Error: {str(e)}"
+
+    # --- 2. SECONDARY: TEXT COMMANDS ---
+    elif user_query:
+        # Check if the user is trying to use the backend mic while on Render
+        if io_config["mic"] == "Backend" and os.environ.get("RENDER"):
+            return jsonify({
+                "response": "Sir, I cannot access your laptop mic from the cloud. Please use Text Input or Phone Mic.",
+                "audio": "frontend"
+            })
         
-        # NEW: Escape HTML characters so <iostream> is visible
-        safe_response = html.escape(response_text)
-        
-        log_task(query, response_text) 
-        
-        return jsonify({
-            "transcript": query, 
-            "response": safe_response, # Use the escaped version here
-            "audio": "frontend" if io_config["speaker"] == "Frontend" else "backend"
-        })
+        # If it's a normal text command or a local mic command
+        response_text = process_eva_command(user_query)
+
+    # --- 3. FALLBACK: NO DATA ---
+    else:
+        return jsonify({"response": "I am standing by, Sir. Please provide a command or an image."})
+
+    # --- 4. FINAL RENDERING ---
+    safe_response = html.escape(response_text)
+    log_task(user_query or "[Visual Scan]", response_text) 
+    
+    return jsonify({
+        "transcript": user_query or "[Image Uploaded]", 
+        "response": safe_response,
+        "audio": "frontend" if io_config["speaker"] == "Frontend" else "backend"
+    })
+
+from flask import send_file
+
+@app.route('/download/<filename>')
+def download_file(filename):
+    try:
+        # This sends the actual PDF file to your browser
+        return send_file(filename, as_attachment=True)
+    except Exception as e:
+        return f"Error: File not found or deleted by Render. {e}"
 @app.route('/')
 def index():
     try:
