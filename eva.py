@@ -518,27 +518,35 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
-    """Refined PDF generator that preserves code blocks for BSc studies"""
+    """BSc Level PDF Generator with Syntax Highlighting for Code Blocks"""
     pdf = FPDF()
     pdf.add_page()
     
-    # Use Courier for code-like appearance and better character support
-    pdf.set_font("courier", size=10) 
+    # Split content by markdown code fences
+    parts = re.split(r'(```[\s\S]*?```)', content)
     
-    # 1. Clean the text but PRESERVE technical symbols
-    # We replace common problematic characters instead of ignoring them
-    clean_text = content.replace('‘', "'").replace('’', "'").replace('“', '"').replace('”', '"')
-    
-    # 2. Add a Header
-    pdf.set_text_color(0, 210, 255) # Eva Blue
-    pdf.cell(200, 10, txt="E.V.A. MISSION REPORT", ln=True, align='C')
-    pdf.set_text_color(0, 0, 0) # Back to Black
-    pdf.ln(10)
+    for part in parts:
+        if part.startswith('```'):
+            # --- CODE BLOCK STYLING ---
+            # Remove the backticks and language name (e.g., ```python)
+            lines = part.split('\n')
+            code_text = '\n'.join(lines[1:-1]) 
+            
+            # Set background to dark gray and text to lime green
+            pdf.set_fill_color(30, 30, 30)
+            pdf.set_text_color(50, 255, 50) 
+            pdf.set_font("courier", 'B', size=9)
+            
+            # multi_cell with fill=True creates the highlighted box
+            pdf.multi_cell(0, 5, txt=code_text, border=0, align='L', fill=True)
+            pdf.ln(5)
+        else:
+            # --- REGULAR TEXT STYLING ---
+            pdf.set_text_color(0, 0, 0)
+            pdf.set_font("helvetica", size=11)
+            pdf.multi_cell(0, 6, txt=part.strip())
+            pdf.ln(2)
 
-    # 3. Write the content
-    # multi_cell handles long code strings and wraps them correctly
-    pdf.multi_cell(0, 5, txt=clean_text)
-    
     filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
     return filename
@@ -649,7 +657,7 @@ def process_eva_command(query):
             raw_text_to_save = history[-1]['eva'] if history else "No data."
             
             pdf_name = generate_mission_pdf(raw_text_to_save)
-            return f"MISSION_PDF_READY:{pdf_name}"
+            return f"MISSION_PDF_READY:{pdf_name}"      
 
     # --- ENHANCED SCRAPING TRIGGER ---
     if "scrape" in query or "read the page" in query:
