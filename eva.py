@@ -518,13 +518,26 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
-    """Converts text logs into a PDF for your BSc studies"""
+    """Refined PDF generator that preserves code blocks for BSc studies"""
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_font("helvetica", size=12)
-    # Remove emojis/special chars that FPDF might hate
-    clean_text = content.encode('latin-1', 'ignore').decode('latin-1')
-    pdf.multi_cell(0, 10, txt=clean_text)
+    
+    # Use Courier for code-like appearance and better character support
+    pdf.set_font("courier", size=10) 
+    
+    # 1. Clean the text but PRESERVE technical symbols
+    # We replace common problematic characters instead of ignoring them
+    clean_text = content.replace('‘', "'").replace('’', "'").replace('“', '"').replace('”', '"')
+    
+    # 2. Add a Header
+    pdf.set_text_color(0, 210, 255) # Eva Blue
+    pdf.cell(200, 10, txt="E.V.A. MISSION REPORT", ln=True, align='C')
+    pdf.set_text_color(0, 0, 0) # Back to Black
+    pdf.ln(10)
+
+    # 3. Write the content
+    # multi_cell handles long code strings and wraps them correctly
+    pdf.multi_cell(0, 5, txt=clean_text)
     
     filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
@@ -628,16 +641,14 @@ def process_eva_command(query):
         return f"Visualizing: {prompt}. Source: {img_url}"
     
     if "create pdf" in query or "save as pdf" in query:
-        history = []
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
             
-            # Get the last AI response to put in the PDF
-            text_to_save = history[-1]['eva'] if history else "No recent data."
-            pdf_name = generate_mission_pdf(text_to_save)
+            # USE RAW EVA DATA (not escaped HTML)
+            raw_text_to_save = history[-1]['eva'] if history else "No data."
             
-            # Return a message with a custom marker for the frontend to catch
+            pdf_name = generate_mission_pdf(raw_text_to_save)
             return f"MISSION_PDF_READY:{pdf_name}"
 
     # --- ENHANCED SCRAPING TRIGGER ---
