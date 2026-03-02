@@ -969,16 +969,18 @@ if __name__ == "__main__":
     try:
         repo = git.Repo(BASE_DIR)
         
-        # NEW: Force Git to merge without opening the text editor
-        # This prevents the "E325 ATTENTION" screen entirely.
-        repo.git.config("core.editor", "true") 
-        
-        origin = repo.remotes.origin
-        print("System: Syncing Neural Memory...")
-        
-        # Use --no-rebase and --no-edit to keep it automated
-        repo.git.pull('origin', 'main', no_rebase=True, no_edit=True)
-        
-        print("System: Project history restored from GitHub.")
+        # FIX: Check if 'origin' exists in remotes before accessing it
+        if 'origin' in repo.remotes:
+            origin = repo.remotes['origin'] # Access via key rather than attribute
+            origin.pull('main')
+            print("System: Project history restored from GitHub.")
+        else:
+            print("System: 'origin' remote not found. Skipping startup sync.")
+            
     except Exception as e:
+        # This is where your current error is being caught
         print(f"System: Startup sync bypass: {e}")
+
+    startup_greeting()
+    port = int(os.environ.get("PORT", 10000))
+    serve(app, host='0.0.0.0', port=port)
