@@ -568,9 +568,9 @@ def process_eva_command(query):
         return response_text
 
     # --- 2. NEARBY COMPANIES & LOCATION LOGIC ---
-    elif "list" in query or "find" in query:
+    elif "nearby" in query or "find" in query:
         # Example query: "list website designers in Lucknow"
-        search_target = query.replace("list", "").replace("find", "").strip()
+        search_target = query.replace("nearby", "").replace("find", "").strip()
         # This will now call fetch_external_data with types=poi active
         data = fetch_external_data("find_near", search_target)
         response_text = f"Sector scan complete. Here are the companies I found:\n\n{data}"
@@ -643,8 +643,8 @@ def process_eva_command(query):
                 else:
                     return f"Archived locally, but GitHub sync failed. Check Render logs."
                 
-    if "generate image" in query or "draw" in query:
-        prompt = query.replace("generate image", "").replace("draw", "").strip()
+    if "generate image" in query or "draw" in query or "image" in query or "img" in query:
+        prompt = query.replace("generate image", "").replace("draw", "").replace("image","").replace("img","").strip()
         img_url = f"https://image.pollinations.ai/prompt/{prompt.replace(' ', '%20')}?nologo=true"
         return f"Visualizing: {prompt}. Source: {img_url}"
     

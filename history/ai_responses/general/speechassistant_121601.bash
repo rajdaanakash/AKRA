@@ -1,1 +1,0 @@
-pip install SpeechRecognition pyttsx3 pyaudio
