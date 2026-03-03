@@ -19,6 +19,9 @@ import git
 import re
 import html
 from fpdf import FPDF
+from pygments.lexers import get_lexer_by_name
+from pygments.styles import get_style_by_404
+from pygments.util import ClassNotFound
 
 # --- CONFIGURATION ---
 
@@ -518,28 +521,50 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
-    """BSc Level PDF Generator with Syntax Highlighting for Code Blocks"""
     pdf = FPDF()
     pdf.add_page()
     
-    # Split content by markdown code fences
     parts = re.split(r'(```[\s\S]*?```)', content)
     
+    # Define your Syntax Color Palette
+    SYNTAX_COLORS = {
+        'Token.Keyword': (255, 123, 114),    # Red/Pink
+        'Token.Name.Function': (210, 168, 255), # Purple
+        'Token.Literal.String': (165, 214, 255), # Blue
+        'Token.Comment': (139, 148, 158),    # Gray
+        'Token.Operator': (255, 123, 114),   # Red
+        'Token.Name.Builtin': (255, 166, 87)   # Orange
+    }
+
     for part in parts:
         if part.startswith('```'):
-            # --- CODE BLOCK STYLING ---
-            # Remove the backticks and language name (e.g., ```python)
+            # --- ADVANCED SYNTAX HIGHLIGHTING ---
             lines = part.split('\n')
-            code_text = '\n'.join(lines[1:-1]) 
-            
-            # Set background to dark gray and text to lime green
+            lang = lines[0].replace('```', '').strip() or 'python'
+            code_text = '\n'.join(lines[1:-1])
+
+            # Background box
             pdf.set_fill_color(30, 30, 30)
-            pdf.set_text_color(50, 255, 50) 
             pdf.set_font("courier", 'B', size=9)
+
+            try:
+                lexer = get_lexer_by_name(lang)
+            except ClassNotFound:
+                lexer = get_lexer_by_name('text')
+
+            # Tokenize the code
+            tokens = lexer.get_tokens(code_text)
+
+            for ttype, value in tokens:
+                # Map token type to color, default to Lime Green if not found
+                color = SYNTAX_COLORS.get(str(ttype), (50, 255, 50))
+                pdf.set_text_color(*color)
+                
+                # Write to PDF (multi_cell doesn't work well for inline tokens, 
+                # so we use write() and handle newlines)
+                pdf.write(5, value)
             
-            # multi_cell with fill=True creates the highlighted box
-            pdf.multi_cell(0, 5, txt=code_text, border=0, align='L', fill=True)
-            pdf.ln(5)
+            pdf.ln(10) # Space after code block
         else:
             # --- REGULAR TEXT STYLING ---
             pdf.set_text_color(0, 0, 0)
