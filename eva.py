@@ -20,7 +20,7 @@ import re
 import html
 from fpdf import FPDF
 from pygments.lexers import get_lexer_by_name
-from pygments.styles import get_style_by_404
+from pygments.styles import get_style_by_name
 from pygments.util import ClassNotFound
 
 # --- CONFIGURATION ---
@@ -521,47 +521,50 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
+    """BSc Level PDF Generator with Multi-Color Syntax Highlighting"""
     pdf = FPDF()
     pdf.add_page()
     
+    # Split content by markdown code fences
     parts = re.split(r'(```[\s\S]*?```)', content)
     
-    # Define your Syntax Color Palette
-    SYNTAX_COLORS = {
-        'Token.Keyword': (255, 123, 114),    # Red/Pink
-        'Token.Name.Function': (210, 168, 255), # Purple
-        'Token.Literal.String': (165, 214, 255), # Blue
-        'Token.Comment': (139, 148, 158),    # Gray
-        'Token.Operator': (255, 123, 114),   # Red
-        'Token.Name.Builtin': (255, 166, 87)   # Orange
-    }
-
     for part in parts:
         if part.startswith('```'):
-            # --- ADVANCED SYNTAX HIGHLIGHTING ---
+            # --- CODE BLOCK STYLING ---
             lines = part.split('\n')
+            # Detect language (default to python)
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # Background box
+            # Dark Background for Code Box
             pdf.set_fill_color(30, 30, 30)
             pdf.set_font("courier", 'B', size=9)
-
+            
+            # Start the box (rect) before writing text
+            x_start = pdf.get_x()
+            y_start = pdf.get_y()
+            
             try:
                 lexer = get_lexer_by_name(lang)
-            except ClassNotFound:
+            except:
                 lexer = get_lexer_by_name('text')
 
-            # Tokenize the code
+            # --- THE MAGIC LOOP ---
             tokens = lexer.get_tokens(code_text)
-
             for ttype, value in tokens:
-                # Map token type to color, default to Lime Green if not found
-                color = SYNTAX_COLORS.get(str(ttype), (50, 255, 50))
-                pdf.set_text_color(*color)
+                # Assign colors based on Token Type
+                if str(ttype).startswith('Token.Keyword'):
+                    pdf.set_text_color(255, 123, 114) # Red/Pink
+                elif str(ttype).startswith('Token.Literal.String'):
+                    pdf.set_text_color(165, 214, 255) # light Blue
+                elif str(ttype).startswith('Token.Comment'):
+                    pdf.set_text_color(139, 148, 158) # Gray
+                elif str(ttype).startswith('Token.Name.Function'):
+                    pdf.set_text_color(210, 168, 255) # Purple
+                else:
+                    pdf.set_text_color(255, 255, 255) # White for others
                 
-                # Write to PDF (multi_cell doesn't work well for inline tokens, 
-                # so we use write() and handle newlines)
+                # Write the token to the PDF
                 pdf.write(5, value)
             
             pdf.ln(10) # Space after code block
