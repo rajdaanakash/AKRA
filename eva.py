@@ -532,39 +532,37 @@ def generate_mission_pdf(content):
         if part.startswith('```'):
             # --- CODE BLOCK STYLING ---
             lines = part.split('\n')
-            # Detect language (default to python)
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # Dark Background for Code Box
-            pdf.set_fill_color(30, 30, 30)
-            pdf.set_font("courier", 'B', size=9)
+            # 1. ADD DARK BACKGROUND BOX
+            pdf.set_fill_color(30, 30, 30) # Dark Gray
+            # Calculate height based on number of lines (roughly 5 units per line)
+            box_height = (len(lines) * 5) + 5
+            # Draw the filled rectangle
+            pdf.rect(pdf.get_x(), pdf.get_y(), 190, box_height, 'F')
             
-            # Start the box (rect) before writing text
-            x_start = pdf.get_x()
-            y_start = pdf.get_y()
+            # 2. SET FONT
+            pdf.set_font("courier", 'B', size=9)
             
             try:
                 lexer = get_lexer_by_name(lang)
             except:
                 lexer = get_lexer_by_name('text')
 
-            # --- THE MAGIC LOOP ---
+            # 3. TOKEN LOOP WITH COLORS
             tokens = lexer.get_tokens(code_text)
             for ttype, value in tokens:
-                # Assign colors based on Token Type
+                # Map colors
                 if str(ttype).startswith('Token.Keyword'):
-                    pdf.set_text_color(255, 123, 114) # Red/Pink
+                    pdf.set_text_color(255, 123, 114) # Red
                 elif str(ttype).startswith('Token.Literal.String'):
-                    pdf.set_text_color(165, 214, 255) # light Blue
+                    pdf.set_text_color(165, 214, 255) # Blue
                 elif str(ttype).startswith('Token.Comment'):
                     pdf.set_text_color(139, 148, 158) # Gray
-                elif str(ttype).startswith('Token.Name.Function'):
-                    pdf.set_text_color(210, 168, 255) # Purple
                 else:
-                    pdf.set_text_color(255, 255, 255) # White for others
+                    pdf.set_text_color(255, 255, 255) # White
                 
-                # Write the token to the PDF
                 pdf.write(5, value)
             
             pdf.ln(10) # Space after code block
