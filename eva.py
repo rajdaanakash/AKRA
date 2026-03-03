@@ -219,7 +219,7 @@ def archive_groq_response(query, response):
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
             
-            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html", "bash": ".sh"}
+            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html", "bash": ".sh","text": ".txt"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
 
             # AI Filename Logic
