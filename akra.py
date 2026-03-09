@@ -691,7 +691,7 @@ def execute_single_command(query, context=""):
             if history:
                 last_interaction = history[-1]
                 # 1. Save the file locally on the Render server
-                file_path = archive_groq_response(last_interaction['user'], last_interaction['eva'])
+                file_path = archive_groq_response(last_interaction['you'], last_interaction['AKRA'])
                 
                 # 2. TRIGGER THE GITHUB PUSH
                 sync_success = push_to_github() 
