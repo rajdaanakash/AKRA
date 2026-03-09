@@ -75,7 +75,7 @@ def get_ai_response(prompt):
 
     # Define system_msg with the new Project Memory
     system_msg = (
-        f"You are EVA (Enhanced Virtual Assitant), created by Akash in India so provide data in India's point of view and cercumsentence. Current Project: {active_mission}.\n"
+        f"You are AKRA (Advanced Kinects Responses Alogorithm), created by Akash in India so provide data in India's point of view and cercumsentence. Current Project: {active_mission}.\n"
         f"Project Files for Context:\n{project_memory}\n"
         f"Permanent Notes:\n{permanent_notes}\n"
         f"Recent Chat:\n{history_context}"
