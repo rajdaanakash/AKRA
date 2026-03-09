@@ -229,7 +229,7 @@ async function toggleListening() {
         };
     } else {
         // Standard Laptop Mic Logic
-        status.innerText = "Eva is listening (Laptop Mic)...";
+        status.innerText = "AKRA is listening (Laptop Mic)...";
         const res = await fetch('/run-eva', { method: 'POST' });
         const data = await res.json();
         handleEVAResponse(data);
@@ -247,8 +247,8 @@ function loadHistory() {
             list.innerHTML = data.reverse().map(item => `
                 <div class="log-item">
                     <small style="color: #00d2ff;">${item.timestamp}</small><br>
-                    <strong>User:</strong> ${item.user}<br>
-                    <strong>EVA:</strong> ${item.eva}
+                    <strong>you:</strong> ${item.you}<br>
+                    <strong>AKRA:</strong> ${item.AKRA}
                 </div>
                 <hr class="log-divider">
             `).join('');
@@ -386,7 +386,7 @@ function handleEVAResponse(data) {
 
     // Inject the result into the specific results area
     if (chatResults) {
-        chatResults.innerHTML = `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
+        chatResults.innerHTML = `<div class="log-item"><strong>AKRA:</strong> ${responseText}</div>`;
     }
 
     document.getElementById('status').innerText = "AKRA: Task Complete.";
