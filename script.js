@@ -201,42 +201,6 @@ async function sendTextPrompt() {
     }
 }
 
-async function toggleListening() {
-    const orb = document.getElementById('eva-orb');
-    const status = document.getElementById('status');
-    const micMode = document.getElementById('mic-select').value;
-
-    orb.classList.add('listening');
-
-    if (micMode === "Frontend") {
-        // --- THIS STARTS THE BROWSER RECOGNITION ---
-        status.innerText = "Listening through Browser...";
-        recognition.start();
-
-        recognition.onresult = async (event) => {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('transcript').innerText = "You: " + transcript;
-
-            // Send the actual words to your Python server
-            const res = await fetch('/run-eva', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ "transcript": transcript })
-            });
-            const data = await res.json();
-            handleEVAResponse(data);
-            orb.classList.remove('listening');
-        };
-    } else {
-        // Standard Laptop Mic Logic
-        status.innerText = "AKRA is listening (Laptop Mic)...";
-        const res = await fetch('/run-eva', { method: 'POST' });
-        const data = await res.json();
-        handleEVAResponse(data);
-        orb.classList.remove('listening');
-    }
-}
-
 // --- NEW: History & Notes Loaders ---
 function loadHistory() {
     // Adding ?v= + new Date().getTime() makes the URL unique every time

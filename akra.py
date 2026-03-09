@@ -51,7 +51,7 @@ def get_ai_response(prompt):
         with open(HISTORY_FILE, "r") as f:
             history = json.load(f)
             for item in history[-5:]: 
-                history_context += f"You: {item['you']}\nAKRA: {item['akra']}\n"
+                history_context += f"You: {item['you']}\nAKRA: {item['AKRA']}\n"
 
     # --- NEW: ACTIVE DIRECTORY SCANNER ---
     project_memory = ""
