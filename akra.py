@@ -680,7 +680,7 @@ def process_eva_command(query):
                 history = json.load(f)
             
             # USE RAW EVA DATA (not escaped HTML)
-            raw_text_to_save = history[-1]['eva'] if history else "No data."
+            raw_text_to_save = history[-1]['AKRA'] if history else "No data."
             
             pdf_name = generate_mission_pdf(raw_text_to_save)
             return f"MISSION_PDF_READY:{pdf_name}"      
@@ -830,7 +830,7 @@ def process_eva_command(query):
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
-                last_task = history[-1]['user'] if history else "none"
+                last_task = history[-1]['you'] if history else "none"
                 response_text = f"Your last recorded task was: {last_task}"
                 
         else:
