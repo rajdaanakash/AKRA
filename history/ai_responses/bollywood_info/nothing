@@ -1,1 +1,0 @@
-New-Item -Path "history/ai_responses/cpp/.gitkeep" -ItemType File

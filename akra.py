@@ -176,7 +176,7 @@ def push_to_github():
         repo.git.add(all=True)
         # Check if there are actually changes to commit to avoid errors
         if repo.is_dirty(untracked_files=True):
-            repo.index.commit(f"EVA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            repo.index.commit(f"AKRA Cloud Sync: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
             
             # CRITICAL: Re-set the remote URL to ensure the token is used for THIS push
             if 'origin' in repo.remotes:
@@ -294,7 +294,7 @@ CORS(app)
 # --- CORE FUNCTIONS ---
 
 def speak(text):
-    print(f"EVA: {text}")
+    print(f"AKRA: {text}")
     # try:
     #     # Create a local engine instance to avoid threading issues
     #     local_engine = pyttsx3.init()
@@ -319,8 +319,8 @@ def log_task(query, response):
         # Append the new interaction
         history.append({
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "user": query,
-            "eva": response
+            "you": query,
+            "AKRA": response
         })
         
         # --- NEW: FIFO LOGIC (Limit to 2000 lines/entries) ---
@@ -872,7 +872,7 @@ def process_eva_command(query):
         # C. Specialized Prompt to prioritize India and 2026 data
         # This matches the system_msg style you shared in your screenshot.
         prompt = (
-            f"You are EVA, developed in India by Akash. Current Date: {current_date_context}.\n"
+            f"You are AKRA, developed in India by Akash. Current Date: {current_date_context}.\n"
             f"User Question: {query}\n\n"
             f"Live Web Research: {raw_web_data}\n\n"
             "INSTRUCTION: Prioritize official latest information, searches, links, current affairs, news, name changes or facts after 2024 to since today "
@@ -1064,7 +1064,7 @@ def stop_eva():
     #     return jsonify({"status": "stopped", "response": "Speech stopped, Sir."})
     # except Exception as e:
     #     return jsonify({"status": "error", "message": str(e)})
-    print("EVA: System Silenced by User.")
+    print("AKRA: System Silenced by User.")
     return jsonify({"status": "stopped", "response": "System Silenced, Sir."})
 # Default mood
 current_mood = "Professional" 
@@ -1094,7 +1094,7 @@ def add_header(response):
 def startup_greeting():
     hour = datetime.now().hour
     greeting = "Good Morning" if hour < 12 else "Good Afternoon" if hour < 18 else "Good Evening"
-    speak(f"{greeting} Sir. Systems are nominal. EVA is online.")
+    speak(f"{greeting} Sir. Systems are nominal. AKRA is online.")
 
 if __name__ == "__main__":
     try:

@@ -128,7 +128,7 @@ function sendShortcut(command) {
     })
         .then(res => res.json())
         .then(data => {
-            document.getElementById('status').innerText = "Eva: " + data.response;
+            document.getElementById('status').innerText = "AKRA: " + data.response;
 
             // --- HIGHLIGHTED FIX: TRIGGER BROWSER VOICE ---
             if (data.audio === "frontend") {
@@ -157,7 +157,7 @@ function uploadImage() {
             previewImg.src = attachedImageData;
             previewContainer.style.display = "block";
 
-            document.getElementById('status').innerText = `Eva: Image ready. Ask your question, Sir.`;
+            document.getElementById('status').innerText = `AKRA: Image ready. Ask your question, Sir.`;
         };
         reader.readAsDataURL(file);
     };
@@ -167,7 +167,7 @@ function uploadImage() {
 function clearAttachment() {
     attachedImageData = null;
     document.getElementById('image-preview-container').style.display = "none";
-    document.getElementById('status').innerText = "Eva: Attachment cleared.";
+    document.getElementById('status').innerText = "AKRA: Attachment cleared.";
 }
 
 // Update sendTextPrompt to clear the preview on success
@@ -177,7 +177,7 @@ async function sendTextPrompt() {
     const status = document.getElementById('status');
 
     if (userMessage.trim() !== "" || attachedImageData) {
-        status.innerText = "Eva: Synchronizing visual and text data...";
+        status.innerText = "AKRA: Synchronizing visual and text data...";
 
         try {
             const res = await fetch('/run-eva', {
@@ -279,7 +279,7 @@ function stopSpeaking() {
         .then(response => response.json())
         .then(data => {
             console.log("Backend stop signal sent:", data.response);
-            document.getElementById('status').innerText = "Eva: System Silenced.";
+            document.getElementById('status').innerText = "AKRA: System Silenced.";
         })
         .catch(err => console.error("Could not reach Backend stop:", err));
 }
@@ -359,7 +359,7 @@ async function toggleListening() {
 
     } else {
         // --- CASE B: BACKEND (LAPTOP) MIC ---
-        status.innerText = "Eva is listening (Laptop)...";
+        status.innerText = "AKRA is listening (Laptop)...";
         try {
             const res = await fetch('/run-eva', { method: 'POST' });
             const data = await res.json();
@@ -389,7 +389,7 @@ function handleEVAResponse(data) {
         chatResults.innerHTML = `<div class="log-item"><strong>EVA:</strong> ${responseText}</div>`;
     }
 
-    document.getElementById('status').innerText = "Eva: Task Complete.";
+    document.getElementById('status').innerText = "AKRA: Task Complete.";
     // Check if we should speak through the Browser/Phone
     if (data.audio === "frontend" || document.getElementById('speaker-select').value === "Frontend") {
         // We strip HTML tags like <br> so the AI doesn't literally say "B R"
