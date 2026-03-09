@@ -1,4 +1,4 @@
-EVA (Enahaced Virtual Assistant)
+AKRA (Advanced Kinetics Response Algorithm)
 <br>
 This Enhanced Virtual Assistant is made by me <br>
 I made it by researching on gemini ,<br>
