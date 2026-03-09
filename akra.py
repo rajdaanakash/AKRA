@@ -18,6 +18,7 @@ from waitress import serve
 import git
 import re
 import html
+import time
 from fpdf import FPDF
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
@@ -580,10 +581,41 @@ def generate_mission_pdf(content):
 
 def process_eva_command(query):
     global active_mission
-    query = query.lower()
+    query = query.lower().strip()
+    
+    # 1. Split logic remains the same
+    task_list = re.split(r',\s*|\s+and\s+', query)
+    task_list = [t.strip() for t in task_list if t.strip()]
+
+    current_context = "" 
+    responses = []
+    
+    for task in task_list:
+        # 2. EXECUTION: Pass the code from the previous task as 'context'
+        res = execute_single_command(str(task), context=current_context)
+        
+        if res:
+            current_context = res # Update handover data
+            responses.append(res)
+            
+            # --- MISSION LOGGING: FIXED ---
+            # Now, each sub-task gets its own separate log entry
+            log_task(task, res) 
+            
+            if io_config["speaker"] == "Backend":
+                speak(res) 
+        
+        # 3. LOQ Stability Delay
+        time.sleep(3 if any(w in task for w in ["start", "launch", "spotify"]) else 0.5) 
+
+    return " | ".join(responses)
+
+def execute_single_command(query, context=""):
+
+    global active_mission, system_coords  # Crucial: Declares globals to prevent crashes
     command_handled = False
-    global response_text
     response_text = ""
+    query = query.lower().strip()
 
     # --- 1. MOVIE & SHOW LOGIC ---
     if "new movies" in query or "latest movies" in query or "released today" in query:
