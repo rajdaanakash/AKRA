@@ -136,7 +136,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Now we join that with your folders
 HISTORY_FILE = os.path.join(BASE_DIR, "task_history.json")
 HISTORY_DIR = os.path.join(BASE_DIR, "history", "ai_responses")
-NOTES_FILE = os.path.join(BASE_DIR, "eva_notes.json")
+NOTES_FILE = os.path.join(BASE_DIR, "akra_notes.json")
 # --- NEW: ACTIVE PROJECT TRACKER ---
 active_mission = "general" # Default folder
 
@@ -943,7 +943,7 @@ def execute_single_command(query, context=""):
 
 # --- FLASK ROUTES ---
 # State management
-io_config = {"mic": "Backend", "speaker": "Backend"}
+io_config = {"mic": "Frontend", "speaker": "Frontend"}
 
 @app.route('/update-io', methods=['POST'])
 def update_io():
