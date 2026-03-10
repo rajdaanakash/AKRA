@@ -221,7 +221,7 @@ function loadHistory() {
 }
 
 function loadNotes() {
-    fetch('/eva_notes.json').then(res => res.json()).then(data => {
+    fetch('/akra_notes.json').then(res => res.json()).then(data => {
         const list = document.getElementById('notes-list');
         list.innerHTML = data.map(n => `
                     <div class="log-item note-item">
