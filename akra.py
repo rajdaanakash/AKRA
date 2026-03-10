@@ -1135,22 +1135,34 @@ def startup_greeting():
     greeting = "Good Morning" if hour < 12 else "Good Afternoon" if hour < 18 else "Good Evening"
     speak(f"{greeting} Sir. Systems are nominal. AKRA is online.")
 
-if __name__ == "__main__":
+def sync_on_startup():
+    """Forces the local environment to match the GitHub remote on startup."""
     try:
+        print("System: Initializing Startup Sync...")
         repo = git.Repo(BASE_DIR)
         
-        # FIX: Check if 'origin' exists in remotes before accessing it
-        if 'origin' in repo.remotes:
-            origin = repo.remotes['origin'] # Access via key rather than attribute
-            origin.pull('main')
-            print("System: Project history restored from GitHub.")
-        else:
-            print("System: 'origin' remote not found. Skipping startup sync.")
-            
+        # 1. Fetch all updates from the remote
+        origin = repo.remotes.origin
+        origin.fetch()
+        
+        # 2. Hard reset to origin/main (or your branch name)
+        # This is CRITICAL: It forces the local files to match GitHub exactly,
+        # which will pull in any missing directories you created elsewhere.
+        repo.git.reset('--hard', 'origin/main')
+        
+        # 3. Final pull to ensure everything is locked in
+        origin.pull()
+        
+        print("System: All directories and mission logs are now up-to-date.")
     except Exception as e:
-        # This is where your current error is being caught
-        print(f"System: Startup sync bypass: {e}")
+        print(f"Startup Sync Error: {e}")
 
-    startup_greeting()
-    port = int(os.environ.get("PORT", 10000))
-    serve(app, host='0.0.0.0', port=port)
+# --- CALL THIS BEFORE STARTING THE SERVER ---
+if __name__ == "__main__":
+    # Run the sync first!
+    sync_on_startup()
+    
+    # Then start your Flask app
+    print("AKRA 1 is going live...")
+    serve(app, host='0.0.0.0', port=(10000))
+    

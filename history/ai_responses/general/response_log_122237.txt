@@ -1,0 +1,24 @@
+### OOP in C++
+Object-Oriented Programming (OOP) is a fundamental concept in C++ that involves creating objects that contain both data and functions. As of 2026, OOP remains a crucial aspect of C++ programming.
+
+#### Key Concepts
+* **Objects**: Anything that has state and behavior can be termed as an object. In C++, objects are instances of classes.
+* **Classes**: A class is a blueprint or a template that defines the properties and behavior of an object.
+* **Inheritance**: Inheritance is a mechanism in OOP that allows one class to inherit the properties and behavior of another class.
+* **Polymorphism**: Polymorphism is the ability of an object to take on multiple forms, depending on the context in which it is used.
+* **Encapsulation**: Encapsulation is the concept of hiding the implementation details of an object from the outside world and only exposing the necessary information through public methods.
+
+#### Official Resources
+For the latest information on OOP in C++, you can refer to the following official resources:
+* **C++ Official Website**: The official C++ website provides a comprehensive guide to OOP concepts in C++.
+* **Microsoft Documentation**: Microsoft provides extensive documentation on C++ OOP concepts, including tutorials, examples, and reference materials.
+* **W3Schools**: W3Schools offers a range of tutorials, examples, and reference materials on C++ OOP concepts.
+
+#### Local Resources (India)
+If you are looking for local resources to learn OOP in C++ in India, you can consider the following options:
+* **Indian Institute of Technology (IIT)**: IIT offers various courses and resources on C++ programming, including OOP concepts.
+* **National Institute of Technology (NIT)**: NIT also offers courses and resources on C++ programming, including OOP concepts.
+* **Online Courses**: There are various online courses available on platforms like Coursera, Udemy, and edX that offer C++ courses with a focus on OOP concepts.
+
+#### Conclusion
+OOP is a fundamental concept in C++ that allows developers to create reusable, modular, and maintainable code. By understanding OOP concepts, developers can create robust and efficient C++ programs. For the latest information on OOP in C++, you can refer to official resources and local institutions in India.
