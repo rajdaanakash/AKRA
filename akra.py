@@ -8,7 +8,7 @@ import json
 from flask import Flask, jsonify, send_from_directory, request
 from flask_cors import CORS
 from groq import Groq 
-from datetime import datetime
+from datetime import datetime, timedelta
 from ddgs import DDGS
 import requests
 import subprocess
@@ -310,30 +310,55 @@ def speak(text):
     # except Exception as e:
     #     print(f"Voice Error: {e}")
 
+# def log_task(query, response):  
+#     try:
+#         history = []
+#         if os.path.exists(HISTORY_FILE):
+#             with open(HISTORY_FILE, "r") as f:
+#                 history = json.load(f)
+        
+#         # Append the new interaction
+#         history.append({
+#             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#             "you": query,
+#             "AKRA": response
+#         })
+        
+#         # --- NEW: FIFO LOGIC (Limit to 2000 lines/entries) ---
+#         # Since each entry is roughly 5-7 lines in JSON, 
+#         # we limit the 'number of entries' to keep the total lines manageable.
+#         MAX_ENTRIES = 100 # 300 entries is roughly 2000 lines in a JSON file
+        
+#         if len(history) > MAX_ENTRIES:
+#             # Remove the oldest entry (index 0)
+#             history = history[-MAX_ENTRIES:] 
+#             print(f"System: FIFO Cleanup performed. Keeping latest {MAX_ENTRIES} entries.")
+#         # -----------------------------------------------------
+
+#         with open(HISTORY_FILE, "w") as f:
+#             json.dump(history, f, indent=4)
+#     except Exception as e:
+#         print(f"Logging Error: {e}")
+
 def log_task(query, response):  
     try:
+        # Calculate IST (UTC + 5:30)
+        ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+        timestamp_ist = ist_now.strftime("%Y-%m-%d %H:%M:%S")
+
         history = []
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history = json.load(f)
         
-        # Append the new interaction
         history.append({
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": timestamp_ist, # Now uses Indian Time
             "you": query,
             "AKRA": response
         })
         
-        # --- NEW: FIFO LOGIC (Limit to 2000 lines/entries) ---
-        # Since each entry is roughly 5-7 lines in JSON, 
-        # we limit the 'number of entries' to keep the total lines manageable.
-        MAX_ENTRIES = 100 # 300 entries is roughly 2000 lines in a JSON file
-        
-        if len(history) > MAX_ENTRIES:
-            # Remove the oldest entry (index 0)
-            history = history[-MAX_ENTRIES:] 
-            print(f"System: FIFO Cleanup performed. Keeping latest {MAX_ENTRIES} entries.")
-        # -----------------------------------------------------
+        # Keep latest 100 entries
+        history = history[-100:] 
 
         with open(HISTORY_FILE, "w") as f:
             json.dump(history, f, indent=4)
