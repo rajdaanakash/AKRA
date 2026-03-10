@@ -388,3 +388,14 @@ recognition.onerror = (event) => {
     document.getElementById('status').innerText = "Mic Error: " + event.error;
 };
 
+// Keep-Alive Heartbeat
+setInterval(async () => {
+    try {
+        const response = await fetch('/ping'); // We will create this route in Flask
+        const data = await response.json();
+        console.log("Heartbeat sent: Service is Live", data.time);
+    } catch (error) {
+        console.error("Heartbeat failed: Service might be sleeping", error);
+    }
+}, 600000); // 10 minutes
+

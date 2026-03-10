@@ -1053,6 +1053,13 @@ def run_eva():
 
 from flask import send_file
 
+@app.route('/ping')
+def ping():
+    return jsonify({
+        "status": "online",
+        "time": datetime.now().strftime("%H:%M:%S")
+    }), 200
+
 @app.route('/download/<filename>')
 def download_file(filename):
     try:
