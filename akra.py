@@ -547,37 +547,41 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
-    """BSc Level PDF Generator with Multi-Color Syntax Highlighting"""
+    """BSc Level PDF Generator with Multi-Color Syntax Highlighting and Unicode Support"""
     pdf = FPDF()
     pdf.add_page()
     
+    # Register the Unicode font (Ensure the .ttf file is in your folder!)
+    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf')
+    pdf.set_font('DejaVu', '', size=11)
+
     # Split content by markdown code fences
     parts = re.split(r'(```[\s\S]*?```)', content)
-    
+
     for part in parts:
         if part.startswith('```'):
             # --- CODE BLOCK STYLING ---
             lines = part.split('\n')
+            # Extract language (e.g., ```python) or default to 'text'
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # 1. ADD DARK BACKGROUND BOX
-            pdf.set_fill_color(30, 30, 30) # Dark Gray
-            # Calculate height based on number of lines (roughly 5 units per line)
+            # Calculate box height
             box_height = (len(lines) * 5) + 5
-            # Draw the filled rectangle
+            pdf.set_fill_color(30, 30, 30) # Dark Gray
             pdf.rect(pdf.get_x(), pdf.get_y(), 190, box_height, 'F')
-            
-            # 2. SET FONT
-            pdf.set_font("courier", 'B', size=9)
-            
+
+            # Use Unicode font for code
+            pdf.set_font("DejaVu", size=9)
+
             try:
                 lexer = get_lexer_by_name(lang)
             except:
                 lexer = get_lexer_by_name('text')
 
-            # 3. TOKEN LOOP WITH COLORS
+            # --- THIS IS THE MISSING LINE THAT DEFINES TOKENS ---
             tokens = lexer.get_tokens(code_text)
+
             for ttype, value in tokens:
                 # Map colors
                 if str(ttype).startswith('Token.Keyword'):
@@ -590,12 +594,12 @@ def generate_mission_pdf(content):
                     pdf.set_text_color(255, 255, 255) # White
                 
                 pdf.write(5, value)
-            
+
             pdf.ln(10) # Space after code block
         else:
             # --- REGULAR TEXT STYLING ---
             pdf.set_text_color(0, 0, 0)
-            pdf.set_font("helvetica", size=11)
+            pdf.set_font("DejaVu", size=11)
             pdf.multi_cell(0, 6, txt=part.strip())
             pdf.ln(2)
 
