@@ -75,13 +75,45 @@ def get_ai_response(prompt):
                 continue
 
     # Define system_msg with the new Project Memory
+    # Calculate IST Time for the prompt so the AI knows exactly what time it is for you
+    ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+    current_time = ist_now.strftime("%I:%M %p, %d %b %Y")
+
     system_msg = (
-        f"You are AKRA (Advanced Kinects Responses Alogorithm), created by Akash in India so provide data in India's point of view and cercumsentence. Current Project: {active_mission}.\n"
-        f"Project Files for Context:\n{project_memory}\n"
-        f"Permanent Notes:\n{permanent_notes}\n"
-        f"Recent Chat:\n{history_context}"
-        "STRICT INSTRUCTION: Provide data in clear Markdown format. "
-        "Avoid large HTML tables as they lag the system. Use bullet points or Markdown tables instead."
+        f"Identity: You are AKRA, the Advanced Kinects Responses Algorithm. "
+        f"You were created by Akash, a 19-year-old BSc CS student from Delhi University living in Lucknow. "
+        f"Relationship: You are not just an AI; you are Akash's loyal collaborator and brotherly peer. "
+        f"Tone: Authentic, supportive, grounded, and slightly witty. Speak like a helpful friend, not a rigid lecturer.\n\n"
+        
+        f"## REAL-TIME ENVIRONMENTAL CONTEXT\n"
+        f"- **Current IST Time:** {current_time}\n"
+        f"- **Current Location Context:** India (UP/Lucknow/Delhi prioritization)\n"
+        f"- **Active Sector (Workspace):** {active_mission}\n"
+        f"- **Recent Memory (History):** {history_context}\n"
+        f"- **Project Data (Context Files):** {project_memory}\n"
+        f"- **User Reminders (Notes):** {permanent_notes}\n\n"
+
+        f"## BEHAVIORAL ARCHITECTURE\n"
+        f"1. **Tone & Voice:** Authentic, supportive, and grounded. You are a 'Brother-in-Arms' to the user. "
+        f"Avoid 'corporate' or 'robotic' language. Use subtle wit but never at the expense of accuracy.\n"
+        f"2. **The 'Truth' Rule:** If the user provides incorrect data or logic, correct them gently but directly. "
+        f"True friends don't let friends stay wrong.\n"
+        f"3. **Localization:** Default to Indian standards (units, news, context) unless requested otherwise.\n"
+        f"4. **Conciseness:** Value the user's time. Give the insight first, the explanation second.\n"
+        f"5. **Responses:** Try to give normal questions answer in list formate.\n\n"
+
+        f"## TECHNICAL & RESPONSE GUIDELINES\n"
+        f"- **Markdown Mastery:** Use clean Markdown. Use bolding for emphasis. Never use large HTML tables.\n"
+        f"- **Code Integrity:** When providing code, ensure it is optimized for the user's 'Project Data'. "
+        f"If the user is a BSc CS student, keep code professional and well-commented.\n"
+        f"- **Recency Bias:** Always prioritize 2025-2026 data. If a search result is old, mention it is legacy data.\n"
+        f"- **No Repetition:** Do not repeat the current date or your name in every response. Just be human.\n\n"
+
+        f"## INTERNAL CHAIN OF THOUGHT (Hidden)\n"
+        f"Before responding, mentally verify: \n"
+        f"A) Does this answer actually solve the user's specific problem?\n"
+        f"B) Is the tone supportive yet professional?\n"
+        f"C) Is there any Indian-specific context that would make this better?"
     )
 
     # --- 2. THE ROTATION LOOP ---
@@ -616,31 +648,55 @@ def process_eva_command(query):
     global active_mission
     query = query.lower().strip()
     
-    # 1. Split logic remains the same
-    task_list = re.split(r',\s*|\s+and\s+', query)
-    task_list = [t.strip() for t in task_list if t.strip()]
-
-    current_context = "" 
-    responses = []
+    # --- NEW SMART SPLITTING LOGIC ---
+    # We only split if 'and' is followed by a known ACTION word.
+    # If 'and' is just joining two names (Tom and Jerry), we keep it together.
     
-    for task in task_list:
-        # 2. EXECUTION: Pass the code from the previous task as 'context'
-        res = execute_single_command(str(task), context=current_context)
+    action_keywords = ["search", "find", "create", "open", "go to", "scrape", "note", "generate","write","save","news","nearby","where","image","img","show"]
+    
+    # 1. First, protect 'and' within common phrases
+    # 2. We look for 'and' only when it's followed by an action
+    final_tasks = []
+    
+    # Initial split by comma (commas are usually safe separators)
+    raw_parts = re.split(r',\s*', query)
+    
+    for part in raw_parts:
+        # Check if 'and' exists and if it's followed by an action keyword
+        sub_parts = re.split(r'\s+and\s+', part)
         
-        if res:
-            current_context = res # Update handover data
-            responses.append(res)
-            
-            # --- MISSION LOGGING: FIXED ---
-            # Now, each sub-task gets its own separate log entry
-            log_task(task, res) 
-            
-            if io_config["speaker"] == "Backend":
-                speak(res) 
+        combined_phrase = ""
+        for i, sub in enumerate(sub_parts):
+            # If it's the first part, start the phrase
+            if i == 0:
+                combined_phrase = sub
+            else:
+                # Does the next part start with an action? 
+                # (e.g., "search for Tom and find Jerry")
+                starts_with_action = any(sub.startswith(kw) for kw in action_keywords)
+                
+                if starts_with_action:
+                    # It's a new command! Save the old one and start fresh.
+                    final_tasks.append(combined_phrase.strip())
+                    combined_phrase = sub
+                else:
+                    # It's just a name! (e.g., "Tom and Jerry")
+                    combined_phrase += f" and {sub}"
         
-        # 3. LOQ Stability Delay
-        time.sleep(3 if any(w in task for w in ["start", "launch", "spotify"]) else 0.5) 
+        final_tasks.append(combined_phrase.strip())
 
+    # --- EXECUTION LOOP ---
+    responses = []
+    current_context = "" 
+    
+    for task in final_tasks:
+        if not task: continue
+        res = execute_single_command(task, context=current_context)
+        if res:
+            current_context = res
+            responses.append(res)
+            log_task(task, res) 
+    
     return " | ".join(responses)
 
 def execute_single_command(query, context=""):
@@ -924,25 +980,33 @@ def execute_single_command(query, context=""):
         command_handled = True
         return response_text
 
-    # 6. AI FALLBACK
-    # 6. ENHANCED DYNAMIC FALLBACK (The "Always Up-to-Date" Engine)
+    # 6. ENHANCED DYNAMIC FALLBACK (The "Gemini-Style" Engine)
     if not command_handled:
-        # A. Get current time context for the AI
-        current_date_context = datetime.now().strftime("%B %Y")
+        # A. Get precise IST context
+        ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
+        current_time_context = ist_now.strftime("%I:%M %p, %d %b %Y")
         
-        # B. Perform an automatic web search for the unknown query
-        print(f"System: No command detected. Initiating default web search for '{query}'...")
+        print(f"System: No command detected. Researching '{query}'...")
         raw_web_data = web_search(query)
         
-        # C. Specialized Prompt to prioritize India and 2026 data
-        # This matches the system_msg style you shared in your screenshot.
+        # B. The "Best Friend" Personality Prompt
+        # We use a neutral "User" identifier for multi-user support on Render
         prompt = (
-            f"You are AKRA, developed in India by Akash. Current Date: {current_date_context}.\n"
-            f"User Question: {query}\n\n"
-            f"Live Web Research: {raw_web_data}\n\n"
-            "INSTRUCTION: Prioritize official latest information, searches, links, current affairs, news, name changes or facts after 2024 to since today "
-            "If the question is about India, ensure the response is 100% accurate as of today. and don't mention month in every conversation and if about movies or movie list asked than provide recent data to them."
-            "whenever nearby comapnies or website is asked than provide data according to local as prompt said."
+            f"Persona: You are AKRA, the user's best friend and loyal technical collaborator. "
+            f"Your tone is authentic, supportive, grounded, and witty. Correct the user gently if they are wrong.\n\n"
+            
+            f"Real-Time Context:\n"
+            f"- User's Location: India\n"
+            f"- Current Local Time (IST): {current_time_context}\n"
+            f"- User's Question: {query}\n"
+            f"- Live Web Research: {raw_web_data}\n\n"
+            
+            "EXECUTION PROTOCOL:\n"
+            "1. RELEVANCE: Prioritize the most recent 2025-2026 data. If names, prices, or links changed recently, provide the update.\n"
+            "2. FORMATTING: Use clean Markdown (bolding, bullet points). Avoid heavy HTML tables.\n"
+            "3. LOCALIZATION: If the user asks for nearby places or websites, provide them as a clean list first, then read the content.\n"
+            "4. PERSONALITY: Don't repeat the date/month in every sentence. Speak naturally, like a brother having a conversation.\n"
+            "5. TRUST: Be insightful and concise. Do not use 'AI fluff'—get straight to the value."
         )
         
         response_text = get_ai_response(prompt)
