@@ -1,16 +1,4 @@
-let active_mission = "default";
-let attachedImageData = null; // Stores the image until you hit Send
-function verifyPin() {
-    const pin = document.getElementById('pin-input').value;
-    const SECRET_PIN = "2255"; // Set your 4-digit PIN here
 
-    if (pin === SECRET_PIN) {
-        document.getElementById('lock-screen').style.display = 'none';
-        alert("Welcome back, Sir. Systems Online.");
-    } else {
-        alert("Unauthorized Access. Connection Terminated.");
-    }
-}
 async function fetchDirectories() {
     try {
         const response = await fetch('/list-directories');
