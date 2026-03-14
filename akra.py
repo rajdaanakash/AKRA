@@ -578,23 +578,6 @@ def fetch_external_data(category, query):
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
         
-def get_ai_filename(content, client):
-    try:
-        # We ask Groq to give us ONLY a 3-word filename
-        prompt = f"Summarize this content into a 3-word filename. Use underscores, no spaces, no extension: {content[:500]}"
-        
-        chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile", # Or whichever model you are using
-            max_tokens=10
-        )
-        
-        # Clean the response to ensure it's a valid filename
-        ai_name = chat_completion.choices[0].message.content.strip().replace(" ", "_")
-        return "".join(x for x in ai_name if x.isalnum() or x == "_")
-    except:
-        return "Mission_Log" # Fallback if AI is busy
-        
 def generate_mission_pdf(content):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -660,10 +643,7 @@ def generate_mission_pdf(content):
                 pdf.multi_cell(0, 6, txt=safe_part)
                 pdf.ln(4)
 
-    ai_prefix = get_ai_filename(content)
-    timestamp = datetime.now().strftime('%H%M')
-    filename = f"{ai_prefix}_{timestamp}.pdf"
-    
+    filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
     return filename
 
