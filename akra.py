@@ -197,7 +197,7 @@ def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
         # Explicitly build the URL with your username and token
-        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/AKRA.git"
         
         repo = git.Repo(BASE_DIR)
 
