@@ -583,21 +583,22 @@ def generate_mission_pdf(content):
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Use standard Helvetica
-    pdf.set_font("helvetica", size=11)
-
-    # Split content by markdown code fences
     parts = re.split(r'(```[\s\S]*?```)', content)
 
     for part in parts:
         if part.startswith('```'):
-            # --- CODE BLOCK STYLING ---
+            # --- CODE BLOCK START ---
             lines = part.split('\n')
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # Monospace for code
             pdf.set_font("courier", 'B', size=9)
+            
+            # Draw one large background for the current page section
+            # This prevents the "invisible text" issue
+            start_y = pdf.get_y()
+            # Estimate height for this page (lines * 5)
+            # FPDF is tricky with blocks that cross pages, so we color line-by-line safely
             
             try:
                 lexer = get_lexer_by_name(lang)
@@ -607,22 +608,23 @@ def generate_mission_pdf(content):
             tokens = lexer.get_tokens(code_text)
 
             for ttype, value in tokens:
-                # 1. PAGE BREAK CHECK
-                # If cursor is near bottom, add page and reset dark background
+                # Sanitization
+                safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
+                if not safe_value: continue
+
+                # Page break check
                 if pdf.get_y() > 270:
                     pdf.add_page()
-                
-                # 2. DRAW LINE BACKGROUND
-                # We draw a small rectangle for each line segment to ensure 
-                # it looks like a continuous dark block even across pages
-                current_y = pdf.get_y()
+                    pdf.set_font("courier", 'B', size=9) # Re-apply font on new page
+
+                # DRAW BACKGROUND BOX FOR THIS LINE SEGMENT
+                # This ensures the "Dark Mode" follows the text perfectly
+                cur_x, cur_y = pdf.get_x(), pdf.get_y()
                 pdf.set_fill_color(30, 30, 30)
-                # Draw a background bar for the current line
-                pdf.rect(10, current_y, 190, 5, 'F')
+                # We draw a small box slightly taller than the text (6 units)
+                pdf.rect(10, cur_y, 190, 5, 'F')
 
-                # 3. SANITIZE & COLOR
-                safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
-
+                # SET TOKEN COLORS
                 if str(ttype).startswith('Token.Keyword'):
                     pdf.set_text_color(255, 123, 114) # Red
                 elif str(ttype).startswith('Token.Literal.String'):
@@ -630,22 +632,20 @@ def generate_mission_pdf(content):
                 elif str(ttype).startswith('Token.Comment'):
                     pdf.set_text_color(139, 148, 158) # Gray
                 else:
-                    pdf.set_text_color(255, 255, 255) # White
+                    pdf.set_text_color(220, 220, 220) # Light Gray (Better than pure white)
                 
-                # Use write() for tokens so they stay on the same line until \n
                 pdf.write(5, safe_value)
 
-            pdf.set_text_color(0, 0, 0) # Reset to black
+            pdf.set_text_color(0, 0, 0)
             pdf.ln(10) 
         else:
-            # --- REGULAR TEXT STYLING ---
+            # --- REGULAR TEXT ---
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("helvetica", size=11)
-            
             safe_part = part.strip().encode('latin-1', 'ignore').decode('latin-1')
             if safe_part:
                 pdf.multi_cell(0, 6, txt=safe_part)
-                pdf.ln(2)
+                pdf.ln(4)
 
     filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
