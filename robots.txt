@@ -1,0 +1,16 @@
+# AKRA SYSTEM PROTOCOL: Search Engine Instructions
+User-agent: *
+
+# Allow Google to index your public identity
+Allow: /
+Allow: /logo.png
+
+# STRICT PRIVACY: Block Google from seeing private mission data
+Disallow: /user_data/
+Disallow: /history/
+Disallow: /task_history.json
+Disallow: /akra_notes.json
+Disallow: /users.json
+
+# Tell Google where your sitemap is
+Sitemap: https://akra.onrender.com/sitemap.xml
