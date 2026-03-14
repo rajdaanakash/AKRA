@@ -675,9 +675,8 @@ def generate_mission_pdf(content, client):
                 pdf.ln(4)
 
     # --- 3. AI FILENAME GENERATION ---
-    ai_prefix = get_ai_filename(content, client)
     timestamp = datetime.now().strftime('%H%M')
-    filename = f"{ai_prefix}_{timestamp}.pdf"
+    filename = f"{"pdf"}_{timestamp}.pdf"
     
     pdf.output(filename)
     return filename
