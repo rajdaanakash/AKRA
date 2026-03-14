@@ -1040,10 +1040,16 @@ app.secret_key = 'AKRA_PRIVATE_KEY_2026'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
 def load_all_users():
     if not os.path.exists(USERS_FILE):
+        # Safety: If file is missing, create a blank one immediately
+        with open(USERS_FILE, 'w') as f:
+            json.dump({}, f)
         return {}
+        
     with open(USERS_FILE, 'r') as f:
-        return json.load(f)
-
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return {} # Return empty if file is corrupted
 def save_user_to_json(username, password):
     users = load_all_users()
     users[username] = generate_password_hash(password)
@@ -1101,21 +1107,32 @@ def index():
 # --- 5. UPDATED MISSION LOGS ROUTE ---
 @app.route('/get-mission-logs', methods=['GET'])
 def get_mission_logs():
-    if 'user' not in session: return jsonify({"logs": []}), 401
+    # If no one is logged in, they can't see logs
+    if 'user' not in session:
+        return jsonify({"logs": []}), 401
     
-    user_home = get_user_root()
+    # Locate the logged-in user's folder
+    user_home = os.path.join(HISTORY_DIR, "user_data", session['user'])
     mission_path = os.path.join(user_home, active_mission)
     
-    if not os.path.exists(mission_path): return jsonify({"logs": []})
+    if not os.path.exists(mission_path):
+        return jsonify({"logs": []})
+        
+    try:
+        files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
+        files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
+        
+        log_data = []
+        for file_name in files[:10]: 
+            with open(os.path.join(mission_path, file_name), "r", encoding="utf-8", errors="ignore") as f:
+                log_data.append({
+                    "name": file_name,
+                    "content": f.read(2000) 
+                })
+        return jsonify({"logs": log_data})
+    except Exception as e:
+        return jsonify({"logs": [], "error": str(e)})
     
-    files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
-    files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
-    
-    log_data = []
-    for file_name in files[:10]:
-        with open(os.path.join(mission_path, file_name), "r", encoding="utf-8", errors="ignore") as f:
-            log_data.append({"name": file_name, "content": f.read(2000)})
-    return jsonify({"logs": log_data})
 @app.route('/get-history')
 def get_history():
     if 'user' not in session:
@@ -1171,36 +1188,7 @@ def switch_workspace():
         print(f"Workspace Switch Error: {e}")
         
     return jsonify({"status": "error", "message": "Invalid request"}), 400
-@app.route('/get-mission-logs', methods=['GET'])
-def get_mission_logs():
-    global active_mission
-    mission_path = os.path.join(HISTORY_DIR, active_mission)
-    
-    if not os.path.exists(mission_path):
-        return jsonify({"logs": []})
-        
-    try:
-        files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
-        # Sort by newest first
-        files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
-        
-        log_data = []
-        for file_name in files[:10]: 
-            try:
-                # Use 'errors="ignore"' to handle files with weird characters
-                with open(os.path.join(mission_path, file_name), "r", encoding="utf-8", errors="ignore") as f:
-                    log_data.append({
-                        "name": file_name,
-                        "content": f.read(2000) 
-                    })
-            except Exception as file_err:
-                print(f"Skipping file {file_name} due to error: {file_err}")
-                continue # Keep going even if one file fails
-                
-        return jsonify({"logs": log_data})
-    except Exception as e:
-        print(f"Major log retrieval error: {e}")
-        return jsonify({"logs": [], "error": str(e)}), 200 # Return 200 to stop the UI from breaking
+
     
 @app.route('/read-file', methods=['GET'])
 def read_file():
