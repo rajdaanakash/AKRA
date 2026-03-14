@@ -587,57 +587,56 @@ def generate_mission_pdf(content):
 
     for part in parts:
         if part.startswith('```'):
-            # --- CODE BLOCK START ---
+            # --- CODE BLOCK SETUP ---
             lines = part.split('\n')
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
             pdf.set_font("courier", 'B', size=9)
             
-            # Draw one large background for the current page section
-            # This prevents the "invisible text" issue
-            start_y = pdf.get_y()
-            # Estimate height for this page (lines * 5)
-            # FPDF is tricky with blocks that cross pages, so we color line-by-line safely
-            
             try:
                 lexer = get_lexer_by_name(lang)
             except:
                 lexer = get_lexer_by_name('text')
 
-            tokens = lexer.get_tokens(code_text)
+            # Split code into lines to handle background and page breaks per line
+            code_lines = code_text.split('\n')
 
-            for ttype, value in tokens:
-                # Sanitization
-                safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
-                if not safe_value: continue
-
-                # Page break check
-                if pdf.get_y() > 270:
+            for line in code_lines:
+                # 1. Page Break & Background Logic
+                if pdf.get_y() > 265:
                     pdf.add_page()
-                    pdf.set_font("courier", 'B', size=9) # Re-apply font on new page
+                    pdf.set_font("courier", 'B', size=9)
 
-                # DRAW BACKGROUND BOX FOR THIS LINE SEGMENT
-                # This ensures the "Dark Mode" follows the text perfectly
-                cur_x, cur_y = pdf.get_x(), pdf.get_y()
+                # 2. Draw a dark bar for the ENTIRE line first
+                curr_y = pdf.get_y()
                 pdf.set_fill_color(30, 30, 30)
-                # We draw a small box slightly taller than the text (6 units)
-                pdf.rect(10, cur_y, 190, 5, 'F')
+                pdf.rect(10, curr_y, 190, 6, 'F') # Slightly taller bar
 
-                # SET TOKEN COLORS
-                if str(ttype).startswith('Token.Keyword'):
-                    pdf.set_text_color(255, 123, 114) # Red
-                elif str(ttype).startswith('Token.Literal.String'):
-                    pdf.set_text_color(165, 214, 255) # Blue
-                elif str(ttype).startswith('Token.Comment'):
-                    pdf.set_text_color(139, 148, 158) # Gray
-                else:
-                    pdf.set_text_color(220, 220, 220) # Light Gray (Better than pure white)
+                # 3. Tokenize this specific line
+                line_tokens = lexer.get_tokens(line)
                 
-                pdf.write(5, safe_value)
+                for ttype, value in line_tokens:
+                    safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
+                    
+                    # Set colors based on token type
+                    if str(ttype).startswith('Token.Keyword'):
+                        pdf.set_text_color(255, 123, 114) # Red
+                    elif str(ttype).startswith('Token.Literal.String'):
+                        pdf.set_text_color(165, 214, 255) # Blue
+                    elif str(ttype).startswith('Token.Comment'):
+                        pdf.set_text_color(139, 148, 158) # Gray
+                    else:
+                        pdf.set_text_color(255, 255, 255) # Pure White
+                    
+                    # Write the token
+                    pdf.write(6, safe_value)
+                
+                # Move to next line
+                pdf.ln(6) 
 
-            pdf.set_text_color(0, 0, 0)
-            pdf.ln(10) 
+            pdf.set_text_color(0, 0, 0) # Reset to black
+            pdf.ln(5)
         else:
             # --- REGULAR TEXT ---
             pdf.set_text_color(0, 0, 0)
