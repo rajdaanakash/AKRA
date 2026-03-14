@@ -674,10 +674,7 @@ def generate_mission_pdf(content, client):
                 pdf.multi_cell(0, 6, txt=safe_part)
                 pdf.ln(4)
 
-    # --- 3. AI FILENAME GENERATION ---
-    timestamp = datetime.now().strftime('%H%M')
-    filename = f"{"pdf"}_{timestamp}.pdf"
-    
+    filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
     return filename
 
