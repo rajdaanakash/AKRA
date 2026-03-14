@@ -577,23 +577,6 @@ def fetch_external_data(category, query):
 
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
-        
-def get_ai_filename(content, client):
-    try:
-        # Request a short, descriptive name from Groq
-        prompt = f"Summarize this content into a 2-3 word filename. Use underscores, no spaces, no extension: {content[:500]}"
-        
-        chat_completion = client.chat.completions.create(
-            messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile",
-            max_tokens=10
-        )
-        
-        ai_name = chat_completion.choices[0].message.content.strip().replace(" ", "_")
-        return "".join(x for x in ai_name if x.isalnum() or x == "_")
-    except Exception as e:
-        print(f"Naming Error: {e}")
-        return "Mission_Log"
     
 def generate_mission_pdf(content, client):
     pdf = FPDF()
