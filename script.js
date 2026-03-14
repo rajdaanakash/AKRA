@@ -1,4 +1,5 @@
-
+let active_mission = "default";
+let attachedImageData = null; // Stores the image until you hit Send
 async function fetchDirectories() {
     try {
         const response = await fetch('/list-directories');
