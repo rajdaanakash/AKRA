@@ -648,49 +648,42 @@ def process_eva_command(query):
     global active_mission
     query = query.lower().strip()
     
-    # --- NEW SMART SPLITTING LOGIC ---
-    # We only split if 'and' is followed by a known ACTION word.
-    # If 'and' is just joining two names (Tom and Jerry), we keep it together.
+    # 1. These words trigger a NEW task
+    action_keywords = [
+        "search", "find", "create", "open", "go to", "scrape", "note", 
+        "generate", "write", "save", "news", "nearby", "where", 
+        "image", "img", "show", "tell me", "calculate"
+    ]
     
-    action_keywords = ["search", "find", "create", "open", "go to", "scrape", "note", "generate","write","save","news","nearby","where","image","img","show"]
-    
-    # 1. First, protect 'and' within common phrases
-    # 2. We look for 'and' only when it's followed by an action
+    # 2. Smart Logic: Join sentences unless a keyword appears
+    raw_parts = re.split(r',\s*|\band\b', query) # Also splits on the word 'and'
     final_tasks = []
     
-    # Initial split by comma (commas are usually safe separators)
-    raw_parts = re.split(r',\s*', query)
-    
+    temp_command = ""
     for part in raw_parts:
-        # Check if 'and' exists and if it's followed by an action keyword
-        sub_parts = re.split(r'\s+and\s+', part)
+        part = part.strip()
+        if not part: continue
         
-        combined_phrase = ""
-        for i, sub in enumerate(sub_parts):
-            # If it's the first part, start the phrase
-            if i == 0:
-                combined_phrase = sub
+        # Check if this segment starts with an action word
+        is_new_action = any(part.startswith(kw) for kw in action_keywords)
+        
+        if is_new_action:
+            if temp_command:
+                final_tasks.append(temp_command.strip())
+            temp_command = part
+        else:
+            if temp_command:
+                temp_command += f" {part}" # Keep building the sentence
             else:
-                # Does the next part start with an action? 
-                # (e.g., "search for Tom and find Jerry")
-                starts_with_action = any(sub.startswith(kw) for kw in action_keywords)
-                
-                if starts_with_action:
-                    # It's a new command! Save the old one and start fresh.
-                    final_tasks.append(combined_phrase.strip())
-                    combined_phrase = sub
-                else:
-                    # It's just a name! (e.g., "Tom and Jerry")
-                    combined_phrase += f" and {sub}"
-        
-        final_tasks.append(combined_phrase.strip())
+                temp_command = part
 
-    # --- EXECUTION LOOP ---
+    if temp_command:
+        final_tasks.append(temp_command.strip())
+
+    # --- EXECUTION ---
     responses = []
     current_context = "" 
-    
     for task in final_tasks:
-        if not task: continue
         res = execute_single_command(task, context=current_context)
         if res:
             current_context = res
