@@ -579,11 +579,11 @@ def fetch_external_data(category, query):
             return f"Mapping sector error: {str(e)}"
         
 def generate_mission_pdf(content):
-    """BSc Level PDF Generator with Multi-Color Syntax Highlighting (Sanitized)"""
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Use standard Helvetica (no extra .ttf file needed)
+    # Use standard Helvetica
     pdf.set_font("helvetica", size=11)
 
     # Split content by markdown code fences
@@ -596,13 +596,9 @@ def generate_mission_pdf(content):
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # Calculate box height (approx 5 units per line)
-            box_height = (len(lines) * 5) + 5
-            pdf.set_fill_color(30, 30, 30) # Dark Gray background
-            pdf.rect(pdf.get_x(), pdf.get_y(), 190, box_height, 'F')
-
+            # Monospace for code
             pdf.set_font("courier", 'B', size=9)
-
+            
             try:
                 lexer = get_lexer_by_name(lang)
             except:
@@ -611,33 +607,45 @@ def generate_mission_pdf(content):
             tokens = lexer.get_tokens(code_text)
 
             for ttype, value in tokens:
-                # 1. SANITIZE EACH TOKEN
-                # This removes characters that 'latin-1' (Standard PDF) cannot handle
+                # 1. PAGE BREAK CHECK
+                # If cursor is near bottom, add page and reset dark background
+                if pdf.get_y() > 270:
+                    pdf.add_page()
+                
+                # 2. DRAW LINE BACKGROUND
+                # We draw a small rectangle for each line segment to ensure 
+                # it looks like a continuous dark block even across pages
+                current_y = pdf.get_y()
+                pdf.set_fill_color(30, 30, 30)
+                # Draw a background bar for the current line
+                pdf.rect(10, current_y, 190, 5, 'F')
+
+                # 3. SANITIZE & COLOR
                 safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
 
-                # 2. MAP COLORS
                 if str(ttype).startswith('Token.Keyword'):
-                    pdf.set_text_color(255, 123, 114) # Red-ish
+                    pdf.set_text_color(255, 123, 114) # Red
                 elif str(ttype).startswith('Token.Literal.String'):
-                    pdf.set_text_color(165, 214, 255) # Blue-ish
+                    pdf.set_text_color(165, 214, 255) # Blue
                 elif str(ttype).startswith('Token.Comment'):
                     pdf.set_text_color(139, 148, 158) # Gray
                 else:
                     pdf.set_text_color(255, 255, 255) # White
                 
+                # Use write() for tokens so they stay on the same line until \n
                 pdf.write(5, safe_value)
 
-            pdf.ln(10) # Space after code block
+            pdf.set_text_color(0, 0, 0) # Reset to black
+            pdf.ln(10) 
         else:
             # --- REGULAR TEXT STYLING ---
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("helvetica", size=11)
             
-            # 3. SANITIZE REGULAR TEXT
             safe_part = part.strip().encode('latin-1', 'ignore').decode('latin-1')
-            
-            pdf.multi_cell(0, 6, txt=safe_part)
-            pdf.ln(2)
+            if safe_part:
+                pdf.multi_cell(0, 6, txt=safe_part)
+                pdf.ln(2)
 
     filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
