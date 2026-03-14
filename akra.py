@@ -578,6 +578,23 @@ def fetch_external_data(category, query):
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
         
+def get_ai_filename(content, client):
+    try:
+        # We ask Groq to give us ONLY a 3-word filename
+        prompt = f"Summarize this content into a 3-word filename. Use underscores, no spaces, no extension: {content[:500]}"
+        
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile", # Or whichever model you are using
+            max_tokens=10
+        )
+        
+        # Clean the response to ensure it's a valid filename
+        ai_name = chat_completion.choices[0].message.content.strip().replace(" ", "_")
+        return "".join(x for x in ai_name if x.isalnum() or x == "_")
+    except:
+        return "Mission_Log" # Fallback if AI is busy
+        
 def generate_mission_pdf(content):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -587,7 +604,6 @@ def generate_mission_pdf(content):
 
     for part in parts:
         if part.startswith('```'):
-            # --- CODE BLOCK SETUP ---
             lines = part.split('\n')
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
@@ -599,43 +615,41 @@ def generate_mission_pdf(content):
             except:
                 lexer = get_lexer_by_name('text')
 
-            # Split code into lines to handle background and page breaks per line
             code_lines = code_text.split('\n')
 
             for line in code_lines:
-                # 1. Page Break & Background Logic
-                if pdf.get_y() > 265:
+                # 1. Page Break Check
+                if pdf.get_y() > 275:
                     pdf.add_page()
                     pdf.set_font("courier", 'B', size=9)
 
-                # 2. Draw a dark bar for the ENTIRE line first
                 curr_y = pdf.get_y()
-                pdf.set_fill_color(30, 30, 30)
-                pdf.rect(10, curr_y, 190, 6, 'F') # Slightly taller bar
-
-                # 3. Tokenize this specific line
-                line_tokens = lexer.get_tokens(line)
                 
+                # 2. Draw the background bar
+                # We use height 5 to match the write height exactly (no gaps)
+                pdf.set_fill_color(30, 30, 30)
+                pdf.rect(10, curr_y, 190, 5, 'F') 
+
+                # 3. Tokenize and Write
+                line_tokens = lexer.get_tokens(line)
                 for ttype, value in line_tokens:
                     safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
                     
-                    # Set colors based on token type
                     if str(ttype).startswith('Token.Keyword'):
-                        pdf.set_text_color(255, 123, 114) # Red
+                        pdf.set_text_color(255, 123, 114) 
                     elif str(ttype).startswith('Token.Literal.String'):
-                        pdf.set_text_color(165, 214, 255) # Blue
+                        pdf.set_text_color(165, 214, 255) 
                     elif str(ttype).startswith('Token.Comment'):
-                        pdf.set_text_color(139, 148, 158) # Gray
+                        pdf.set_text_color(139, 148, 158) 
                     else:
-                        pdf.set_text_color(255, 255, 255) # Pure White
+                        pdf.set_text_color(255, 255, 255) 
                     
-                    # Write the token
-                    pdf.write(6, safe_value)
+                    pdf.write(5, safe_value) # Write at height 5
                 
-                # Move to next line
-                pdf.ln(6) 
+                # 4. Move to next line without extra spacing
+                pdf.ln(5) 
 
-            pdf.set_text_color(0, 0, 0) # Reset to black
+            pdf.set_text_color(0, 0, 0)
             pdf.ln(5)
         else:
             # --- REGULAR TEXT ---
@@ -646,7 +660,10 @@ def generate_mission_pdf(content):
                 pdf.multi_cell(0, 6, txt=safe_part)
                 pdf.ln(4)
 
-    filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
+    ai_prefix = get_ai_filename(content)
+    timestamp = datetime.now().strftime('%H%M')
+    filename = f"{ai_prefix}_{timestamp}.pdf"
+    
     pdf.output(filename)
     return filename
 
