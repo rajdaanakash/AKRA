@@ -578,15 +578,48 @@ def fetch_external_data(category, query):
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
         
-def generate_mission_pdf(content):
+def get_ai_filename(content, client):
+    try:
+        # Request a short, descriptive name from Groq
+        prompt = f"Summarize this content into a 2-3 word filename. Use underscores, no spaces, no extension: {content[:500]}"
+        
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.3-70b-versatile",
+            max_tokens=10
+        )
+        
+        ai_name = chat_completion.choices[0].message.content.strip().replace(" ", "_")
+        return "".join(x for x in ai_name if x.isalnum() or x == "_")
+    except Exception as e:
+        print(f"Naming Error: {e}")
+        return "Mission_Log"
+    
+def generate_mission_pdf(content, client):
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
+    # --- 1. SYSTEM HEADER ---
+    try:
+        pdf.image('logo.png', 10, 8, 15) # Ensure logo.png is in your repo
+    except:
+        pass
+    
+    pdf.set_font("helvetica", 'B', size=14)
+    pdf.set_text_color(0, 80, 158) # AKRA Blue
+    pdf.cell(0, 10, "AKRA SYSTEM: MISSION LOG", ln=1, align='C')
+    pdf.set_font("helvetica", 'I', size=8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 5, f"Operator: Akash | {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
+    pdf.ln(10)
+
+    # --- 2. CONTENT PROCESSING ---
     parts = re.split(r'(```[\s\S]*?```)', content)
 
     for part in parts:
         if part.startswith('```'):
+            # CODE BLOCK SETUP
             lines = part.split('\n')
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
@@ -601,41 +634,39 @@ def generate_mission_pdf(content):
             code_lines = code_text.split('\n')
 
             for line in code_lines:
-                # 1. Page Break Check
-                if pdf.get_y() > 275:
+                # Page Break Logic
+                if pdf.get_y() > 270:
                     pdf.add_page()
                     pdf.set_font("courier", 'B', size=9)
 
                 curr_y = pdf.get_y()
                 
-                # 2. Draw the background bar
-                # We use height 5 to match the write height exactly (no gaps)
-                pdf.set_fill_color(30, 30, 30)
-                pdf.rect(10, curr_y, 190, 5, 'F') 
+                # SOLID BACKGROUND LOGIC (0.2mm overlap to remove white gaps)
+                pdf.set_fill_color(30, 30, 30) # Dark Gray
+                pdf.rect(10, curr_y, 190, 5.2, 'F') 
 
-                # 3. Tokenize and Write
                 line_tokens = lexer.get_tokens(line)
                 for ttype, value in line_tokens:
                     safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
                     
+                    # SYNTAX COLORING
                     if str(ttype).startswith('Token.Keyword'):
-                        pdf.set_text_color(255, 123, 114) 
+                        pdf.set_text_color(255, 123, 114) # Red-ish
                     elif str(ttype).startswith('Token.Literal.String'):
-                        pdf.set_text_color(165, 214, 255) 
+                        pdf.set_text_color(165, 214, 255) # Blue-ish
                     elif str(ttype).startswith('Token.Comment'):
-                        pdf.set_text_color(139, 148, 158) 
+                        pdf.set_text_color(139, 148, 158) # Gray
                     else:
-                        pdf.set_text_color(255, 255, 255) 
+                        pdf.set_text_color(240, 240, 240) # Off-white
                     
-                    pdf.write(5, safe_value) # Write at height 5
+                    pdf.write(5, safe_value)
                 
-                # 4. Move to next line without extra spacing
-                pdf.ln(5) 
+                pdf.ln(5) # Standard line height movement
 
             pdf.set_text_color(0, 0, 0)
             pdf.ln(5)
         else:
-            # --- REGULAR TEXT ---
+            # REGULAR TEXT STYLING
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("helvetica", size=11)
             safe_part = part.strip().encode('latin-1', 'ignore').decode('latin-1')
@@ -643,7 +674,11 @@ def generate_mission_pdf(content):
                 pdf.multi_cell(0, 6, txt=safe_part)
                 pdf.ln(4)
 
-    filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
+    # --- 3. AI FILENAME GENERATION ---
+    ai_prefix = get_ai_filename(content, client)
+    timestamp = datetime.now().strftime('%H%M')
+    filename = f"{ai_prefix}_{timestamp}.pdf"
+    
     pdf.output(filename)
     return filename
 
