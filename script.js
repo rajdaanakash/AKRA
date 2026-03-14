@@ -1,4 +1,20 @@
+// Check if user is logged in on page load
+async function checkAuth() {
+    try {
+        const response = await fetch('/ping');
+        if (response.status === 401) {
+            window.location.href = "login.html";
+        }
+    } catch (err) {
+        console.error("Auth check failed", err);
+    }
+}
 
+// Update your window.onload
+window.onload = () => {
+    checkAuth();
+    fetchDirectories();
+};
 async function fetchDirectories() {
     try {
         const response = await fetch('/list-directories');
@@ -165,7 +181,7 @@ async function sendTextPrompt() {
     const status = document.getElementById('status');
 
     if (userMessage.trim() !== "" || attachedImageData) {
-        status.innerText = "AKRA: Synchronizing visual and text data...";
+        status.innerText = "AKRA: Processing Mission Data...";
 
         try {
             const res = await fetch('/run-eva', {
@@ -177,28 +193,34 @@ async function sendTextPrompt() {
                 })
             });
 
+            if (res.status === 401) {
+                window.location.href = "login.html";
+                return;
+            }
+
             const data = await res.json();
             handleEVAResponse(data);
-
-            // Reset everything
             clearAttachment();
             inputField.value = "";
         } catch (err) {
-            status.innerText = "System Error: Failed to reach the visual core.";
+            status.innerText = "System Error: Neural Link Failed.";
         }
     }
 }
 
 // --- NEW: History & Notes Loaders ---
 function loadHistory() {
-    // Adding ?v= + new Date().getTime() makes the URL unique every time
-    fetch('/task_history.json?v=' + new Date().getTime())
-        .then(response => response.json())
+    // We now fetch from a dynamic route that knows WHO is logged in
+    fetch('/get-history') 
+        .then(response => {
+            if (response.status === 401) window.location.href = "login.html";
+            return response.json();
+        })
         .then(data => {
             const list = document.getElementById('history-list');
             list.innerHTML = data.reverse().map(item => `
                 <div class="log-item">
-                    <small style="color: #00d2ff;">${item.timestamp}</small><br>
+                    <small style="color: #00d2ff;">${item.timestamp} [${item.mission}]</small><br>
                     <strong>you:</strong> ${item.you}<br>
                     <strong>AKRA:</strong> ${item.AKRA}
                 </div>
@@ -387,3 +409,22 @@ setInterval(async () => {
     }
 }, 600000); // 10 minutes
 
+async function logout() {
+    const confirmLogout = confirm("Sir, are you sure you want to terminate the active session?");
+    
+    if (confirmLogout) {
+        try {
+            const response = await fetch('/logout');
+            const data = await response.json();
+            
+            // Clear any local cache if necessary
+            console.log(data.message);
+            
+            // Redirect to login page
+            window.location.href = "login.html";
+        } catch (err) {
+            console.error("Logout failed:", err);
+            alert("System Error: Could not terminate session safely.");
+        }
+    }
+}

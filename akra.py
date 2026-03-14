@@ -5,7 +5,7 @@ import webbrowser
 import os
 import json
 # import pyautogui 
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, request, session
 from flask_cors import CORS
 from groq import Groq 
 from datetime import datetime, timedelta
@@ -23,6 +23,7 @@ from fpdf import FPDF
 from pygments.lexers import get_lexer_by_name
 from pygments.styles import get_style_by_name
 from pygments.util import ClassNotFound
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # --- CONFIGURATION ---
 
@@ -164,10 +165,11 @@ def get_ai_response(prompt):
 
 # This finds the EXACT folder where eva.py is located
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+USERS_FILE = os.path.join(BASE_DIR, "users.json")
+HISTORY_DIR = os.path.join(BASE_DIR, "history")
 
 # Now we join that with your folders
 HISTORY_FILE = os.path.join(BASE_DIR, "task_history.json")
-HISTORY_DIR = os.path.join(BASE_DIR, "history", "ai_responses")
 NOTES_FILE = os.path.join(BASE_DIR, "akra_notes.json")
 # --- NEW: ACTIVE PROJECT TRACKER ---
 active_mission = "general" # Default folder
@@ -321,8 +323,6 @@ def web_search(query):
 # engine.setProperty('voice', voices[1].id) 
 # engine.setProperty('rate', 185) 
 
-app = Flask(__name__, static_url_path='', static_folder='.')
-CORS(app)
 
 # --- CORE FUNCTIONS ---
 
@@ -373,29 +373,48 @@ def speak(text):
 #         print(f"Logging Error: {e}")
 
 def log_task(query, response):  
+    # 1. SECURITY CHECK: Only log if a user is in session
+    if 'user' not in session:
+        return 
+
     try:
-        # Calculate IST (UTC + 5:30)
+        # 2. DEFINE PRIVATE USER PATH
+        # Creates: history/user_data/akash/task_history.json
+        user_name = session['user']
+        user_dir = os.path.join(HISTORY_DIR, "user_data", user_name)
+        os.makedirs(user_dir, exist_ok=True) # Create folder if it doesn't exist
+        
+        user_history_file = os.path.join(user_dir, "task_history.json")
+
+        # 3. CALCULATE IST (Indian Standard Time)
         ist_now = datetime.utcnow() + timedelta(hours=5, minutes=30)
         timestamp_ist = ist_now.strftime("%Y-%m-%d %H:%M:%S")
 
+        # 4. LOAD USER'S PRIVATE DATA
         history = []
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
+        if os.path.exists(user_history_file):
+            with open(user_history_file, "r") as f:
                 history = json.load(f)
         
+        # 5. APPEND & SYNC
         history.append({
-            "timestamp": timestamp_ist, # Now uses Indian Time
+            "timestamp": timestamp_ist,
+            "mission": active_mission, # Tracks which project you were in
             "you": query,
             "AKRA": response
         })
         
-        # Keep latest 100 entries
+        # Keep latest 100 entries for efficiency
         history = history[-100:] 
 
-        with open(HISTORY_FILE, "w") as f:
+        with open(user_history_file, "w") as f:
             json.dump(history, f, indent=4)
+            
+        # 6. PUSH TO GITHUB (Optional but recommended for Cloud permanence)
+        push_to_github() 
+        
     except Exception as e:
-        print(f"Logging Error: {e}")
+        print(f"Private Logging Error for {session.get('user')}: {e}")
 
 def listen():
     # 1. Check if running on Render cloud
@@ -1015,6 +1034,101 @@ def execute_single_command(query, context=""):
 
 # --- FLASK ROUTES ---
 # State management
+app = Flask(__name__, static_url_path='', static_folder='.')
+CORS(app)
+app.secret_key = 'AKRA_PRIVATE_KEY_2026'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
+def load_all_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    with open(USERS_FILE, 'r') as f:
+        return json.load(f)
+
+def save_user_to_json(username, password):
+    users = load_all_users()
+    users[username] = generate_password_hash(password)
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f, indent=4)
+    # After saving locally, we push to GitHub so it's permanent
+    push_to_github()
+
+# --- 3. PRIVATE DIRECTORY LOGIC ---
+def get_user_root():
+    """Returns the path to the current logged-in user's private folder"""
+    if 'user' not in session:
+        return None
+    user_folder = os.path.join(HISTORY_DIR, "user_data", session['user'])
+    if not os.path.exists(user_folder):
+        os.makedirs(user_folder, exist_ok=True)
+    return user_folder
+
+# --- 4. AUTH ROUTES ---
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    users = load_all_users()
+    if data['username'] in users:
+        return jsonify({"message": "Operator ID already exists"}), 400
+    
+    save_user_to_json(data['username'], data['password'])
+    return jsonify({"message": "Success"})
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    users = load_all_users()
+    
+    user_hash = users.get(data['username'])
+    if user_hash and check_password_hash(user_hash, data['password']):
+        session.permanent = True
+        session['user'] = data['username']
+        return jsonify({"status": "success", "user": data['username']})
+    
+    return jsonify({"status": "failed"}), 401
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return jsonify({"message": "Logged out."})
+
+@app.route('/')
+def index():
+    if 'user' not in session:
+        # Redirect to the login page if no session exists
+        return send_from_directory(app.static_folder, 'login.html')
+    return send_from_directory(app.static_folder, 'index.html')
+
+# --- 5. UPDATED MISSION LOGS ROUTE ---
+@app.route('/get-mission-logs', methods=['GET'])
+def get_mission_logs():
+    if 'user' not in session: return jsonify({"logs": []}), 401
+    
+    user_home = get_user_root()
+    mission_path = os.path.join(user_home, active_mission)
+    
+    if not os.path.exists(mission_path): return jsonify({"logs": []})
+    
+    files = [f for f in os.listdir(mission_path) if os.path.isfile(os.path.join(mission_path, f))]
+    files.sort(key=lambda x: os.path.getmtime(os.path.join(mission_path, x)), reverse=True)
+    
+    log_data = []
+    for file_name in files[:10]:
+        with open(os.path.join(mission_path, file_name), "r", encoding="utf-8", errors="ignore") as f:
+            log_data.append({"name": file_name, "content": f.read(2000)})
+    return jsonify({"logs": log_data})
+@app.route('/get-history')
+def get_history():
+    if 'user' not in session:
+        return jsonify([]), 401 # Unauthorized
+        
+    user_history_file = os.path.join(HISTORY_DIR, "user_data", session['user'], "task_history.json")
+    
+    if os.path.exists(user_history_file):
+        with open(user_history_file, 'r') as f:
+            return jsonify(json.load(f))
+    return jsonify([])
+
+
 io_config = {"mic": "Frontend", "speaker": "Frontend"}
 
 @app.route('/update-io', methods=['POST'])
@@ -1164,12 +1278,7 @@ def download_file(filename):
         return send_file(filename, as_attachment=True)
     except Exception as e:
         return f"Error: File not found or deleted by Render. {e}"
-@app.route('/')
-def index():
-    try:
-        return send_from_directory(app.static_folder, 'index.html')
-    except Exception:
-        return "Error: index.html not found, Sir."
+
 
 @app.route('/run-eva', methods=['POST'])
 
@@ -1232,32 +1341,18 @@ def startup_greeting():
     greeting = "Good Morning" if hour < 12 else "Good Afternoon" if hour < 18 else "Good Evening"
     speak(f"{greeting} Sir. Systems are nominal. AKRA is online.")
 
-def sync_on_startup():
-    """Forces the local environment to match the GitHub remote on startup."""
+def sync_users_from_github():
     try:
-        print("System: Initializing Startup Sync...")
         repo = git.Repo(BASE_DIR)
-        
-        # 1. Fetch all updates from the remote
         origin = repo.remotes.origin
-        origin.fetch()
-        
-        # 2. Hard reset to origin/main (or your branch name)
-        # This is CRITICAL: It forces the local files to match GitHub exactly,
-        # which will pull in any missing directories you created elsewhere.
-        repo.git.reset('--hard', 'origin/main')
-        
-        # 3. Final pull to ensure everything is locked in
         origin.pull()
-        
-        print("System: All directories and mission logs are now up-to-date.")
+        print("AKRA: User database synchronized from GitHub.")
     except Exception as e:
         print(f"Startup Sync Error: {e}")
-
 # --- CALL THIS BEFORE STARTING THE SERVER ---
 if __name__ == "__main__":
     # Run the sync first!
-    sync_on_startup()
+    sync_users_from_github()
     
     # Then start your Flask app
     print("AKRA 1 is going live...")
