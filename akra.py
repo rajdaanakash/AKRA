@@ -252,31 +252,37 @@ def set_active_project(name):
 
 def archive_groq_response(query, response):
     try:
-        # Use the updated project path logic
+        # 1. Force the system to use the CURRENT user's private project folder
+        # This ensures we don't save to the 'global' history by mistake
         mission_path = set_active_project(active_mission)
-
-        # 1. FIND ALL BLOCKS
+        
+        # 2. Extract code blocks
         matches = list(re.finditer(r"```(\w+)\n(.*?)\n```", response, re.DOTALL))
         
         if not matches:
-            save_single_file(mission_path, "response_log", response, ".txt")
-            return "Log saved."
+            # If no code blocks, save the conversation text as a log
+            save_single_file(mission_path, "conversation_log", response, ".txt")
+        else:
+            # 3. Save each code block as a separate file
+            for match in matches:
+                enforce_fifo_limit(mission_path)
+                lang = match.group(1).lower()
+                code = match.group(2)
+                
+                ext_map = {"python": ".py", "cpp": ".cpp", "javascript": ".js", "html": ".html"}
+                ext = ext_map.get(lang, f".{lang}")
+                
+                # Get a name from AI
+                name_prompt = f"Short 2-word filename for: {code[:50]}"
+                file_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
+                file_name = re.sub(r'[^\w\s-]', '', file_name)
+                
+                save_single_file(mission_path, file_name, code, ext)
 
-        for match in matches:
-            enforce_fifo_limit(mission_path)
-            detected_lang = match.group(1).lower()
-            save_data = match.group(2)
-            
-            ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html", "bash": ".sh","text": ".txt"}
-            ext = ext_map.get(detected_lang, f".{detected_lang}")
-
-            name_prompt = f"Suggest a 2-word filename for this code: {save_data[:50]}"
-            clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
-            clean_name = re.sub(r'[^\w\s-]', '', clean_name)
-            
-            save_single_file(mission_path, clean_name, save_data, ext)
-
-        return f"Sector {active_mission} updated for user {session.get('user')}."
+        # 4. Trigger GitHub Push immediately after saving
+        push_to_github()
+        
+        return f"Sector {active_mission} synchronized."
 
     except Exception as e:
         print(f"Archive Error: {e}")
