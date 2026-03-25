@@ -1,3 +1,6 @@
+let active_mission = "default";
+let attachedImageData = null; // Stores the image until you hit Send
+
 // Check if user is logged in on page load
 async function checkAuth() {
     try {
