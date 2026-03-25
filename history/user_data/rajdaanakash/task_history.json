@@ -1,0 +1,50 @@
+[
+    {
+        "timestamp": "2026-03-25 21:45:43",
+        "mission": "general",
+        "you": "who is your creator",
+        "AKRA": "**About My Creator**\nMy creator is Akash, a 19-year-old BSc CS student from Delhi University, who's currently living in Lucknow. Here are a few key things about him:\n* He's a student at Delhi University, pursuing his Bachelor of Science in Computer Science.\n* He completed his schooling at Jawahar Navodaya Vidyalaya in Barabanki.\n* You can find more about him on his Instagram handle: **__akash___2255**"
+    },
+    {
+        "timestamp": "2026-03-25 21:45:45",
+        "mission": "general",
+        "you": "Who is your creator",
+        "AKRA": "**About My Creator**\nMy creator is Akash, a 19-year-old BSc CS student from Delhi University, who's currently living in Lucknow. Here are a few key things about him:\n* He's a student at Delhi University, pursuing his Bachelor of Science in Computer Science.\n* He completed his schooling at Jawahar Navodaya Vidyalaya in Barabanki.\n* You can find more about him on his Instagram handle: **__akash___2255**"
+    },
+    {
+        "timestamp": "2026-03-25 21:46:13",
+        "mission": "general",
+        "you": "save it",
+        "AKRA": "Interaction archived in the general sector and synced to GitHub, Sir."
+    },
+    {
+        "timestamp": "2026-03-25 21:46:15",
+        "mission": "general",
+        "you": "Save it",
+        "AKRA": "Interaction archived in the general sector and synced to GitHub, Sir."
+    },
+    {
+        "timestamp": "2026-03-25 21:49:50",
+        "mission": "cpp",
+        "you": "create new directory cpp",
+        "AKRA": "Project 'cpp' initialized, Sir."
+    },
+    {
+        "timestamp": "2026-03-25 21:49:57",
+        "mission": "cpp",
+        "you": "write a simple cpp code for swaping two numbers without using third variable",
+        "AKRA": "**Swapping Two Numbers without a Third Variable in C++**\n\nHere's a simple way to swap two numbers without using a third variable. We can use the XOR operator or basic arithmetic operations like addition and subtraction.\n\n### Method 1: Using XOR Operator\n\n```cpp\n#include <iostream>\n\nint main() {\n    int x = 5;\n    int y = 10;\n\n    // Print original values\n    std::cout << \"Original values: x = \" << x << \", y = \" << y << std::endl;\n\n    // Swap using XOR\n    x = x ^ y;\n    y = x ^ y;\n    x = x ^ y;\n\n    // Print swapped values\n    std::cout << \"Swapped values: x = \" << x << \", y = \" << y << std::endl;\n\n    return 0;\n}\n```\n\n### Method 2: Using Addition and Subtraction\n\n```cpp\n#include <iostream>\n\nint main() {\n    int x = 5;\n    int y = 10;\n\n    // Print original values\n    std::cout << \"Original values: x = \" << x << \", y = \" << y << std::endl;\n\n    // Swap using addition and subtraction\n    x = x + y;\n    y = x - y;\n    x = x - y;\n\n    // Print swapped values\n    std::cout << \"Swapped values: x = \" << x << \", y = \" << y << std::endl;\n\n    return 0;\n}\n```\n\nBoth of these methods will swap the values of `x` and `y` without using a third variable. However, keep in mind that the addition and subtraction method may cause an overflow if the sum of `x` and `y` exceeds the maximum limit of the data type.\n\n**Which method do you prefer?**"
+    },
+    {
+        "timestamp": "2026-03-25 21:50:01",
+        "mission": "cpp",
+        "you": "save it",
+        "AKRA": "Interaction archived in the cpp sector and synced to GitHub, Sir."
+    },
+    {
+        "timestamp": "2026-03-25 21:50:03",
+        "mission": "cpp",
+        "you": "Create new directory cpp and write a simple cpp code for swaping two numbers without using third variable and save it",
+        "AKRA": "Project 'cpp' initialized, Sir. | **Swapping Two Numbers without a Third Variable in C++**\n\nHere's a simple way to swap two numbers without using a third variable. We can use the XOR operator or basic arithmetic operations like addition and subtraction.\n\n### Method 1: Using XOR Operator\n\n```cpp\n#include <iostream>\n\nint main() {\n    int x = 5;\n    int y = 10;\n\n    // Print original values\n    std::cout << \"Original values: x = \" << x << \", y = \" << y << std::endl;\n\n    // Swap using XOR\n    x = x ^ y;\n    y = x ^ y;\n    x = x ^ y;\n\n    // Print swapped values\n    std::cout << \"Swapped values: x = \" << x << \", y = \" << y << std::endl;\n\n    return 0;\n}\n```\n\n### Method 2: Using Addition and Subtraction\n\n```cpp\n#include <iostream>\n\nint main() {\n    int x = 5;\n    int y = 10;\n\n    // Print original values\n    std::cout << \"Original values: x = \" << x << \", y = \" << y << std::endl;\n\n    // Swap using addition and subtraction\n    x = x + y;\n    y = x - y;\n    x = x - y;\n\n    // Print swapped values\n    std::cout << \"Swapped values: x = \" << x << \", y = \" << y << std::endl;\n\n    return 0;\n}\n```\n\nBoth of these methods will swap the values of `x` and `y` without using a third variable. However, keep in mind that the addition and subtraction method may cause an overflow if the sum of `x` and `y` exceeds the maximum limit of the data type.\n\n**Which method do you prefer?** | Interaction archived in the cpp sector and synced to GitHub, Sir."
+    }
+]
