@@ -199,7 +199,7 @@ def push_to_github():
     try:
         token = os.environ.get("GITHUB_TOKEN")
         # Explicitly build the URL with your username and token
-        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/EVA_Enhanced_Virtual_Assistant.git"
+        repo_url = f"https://rajdaanakash:{token}@github.com/rajdaanakash/AKRA.git"
         
         repo = git.Repo(BASE_DIR)
 
@@ -232,42 +232,54 @@ def push_to_github():
         print(f"Git Sync Error: {e}") 
         return False
 
+def set_active_project(name):
+    global HISTORY_DIR
+    if 'user' not in session:
+        return os.path.join(HISTORY_DIR, name)
+
+    try:
+        user_home = os.path.join(HISTORY_DIR, "user_data", session['user'])
+        project_path = os.path.join(user_home, name) 
+        
+        if not os.path.exists(project_path):
+            os.makedirs(project_path, exist_ok=True)
+            print(f"System: Created private sector at {project_path}")
+        return project_path
+    except OSError as e:
+        print(f"Hardware Permission Error: {e}")
+        # Return a safe fallback so the rest of the code doesn't break
+        return os.path.join(BASE_DIR, "temp_sector")
+
 def archive_groq_response(query, response):
     try:
-        mission_path = os.path.join(HISTORY_DIR, active_mission)
-        if not os.path.exists(mission_path):
-            os.makedirs(mission_path)
+        # Use the updated project path logic
+        mission_path = set_active_project(active_mission)
 
-        # 1. FIND ALL BLOCKS (Using finditer instead of search)
+        # 1. FIND ALL BLOCKS
         matches = list(re.finditer(r"```(\w+)\n(.*?)\n```", response, re.DOTALL))
         
-        # If no code blocks, save the whole text as one log
         if not matches:
             save_single_file(mission_path, "response_log", response, ".txt")
             return "Log saved."
 
-        # 2. SAVE EACH BLOCK INDIVIDUALLY
         for match in matches:
-            # Check FIFO limit before every single save
             enforce_fifo_limit(mission_path)
-            
             detected_lang = match.group(1).lower()
             save_data = match.group(2)
             
             ext_map = {"python": ".py", "javascript": ".js", "cpp": ".cpp", "html": ".html", "bash": ".sh","text": ".txt"}
             ext = ext_map.get(detected_lang, f".{detected_lang}")
 
-            # AI Filename Logic
-            name_prompt = f"Suggest a 2-word filename for this: {save_data[:50]}"
+            name_prompt = f"Suggest a 2-word filename for this code: {save_data[:50]}"
             clean_name = get_ai_response(name_prompt).strip().replace(" ", "_").lower()
             clean_name = re.sub(r'[^\w\s-]', '', clean_name)
             
             save_single_file(mission_path, clean_name, save_data, ext)
 
-        return f"Sector {active_mission} updated with {len(matches)} new files."
+        return f"Sector {active_mission} updated for user {session.get('user')}."
 
     except Exception as e:
-        print(f"Archive Multi-FIFO Error: {e}")
+        print(f"Archive Error: {e}")
         return None
 
 # Helper to keep the code clean
@@ -1039,17 +1051,23 @@ CORS(app)
 app.secret_key = 'AKRA_PRIVATE_KEY_2026'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=14)
 def load_all_users():
-    if not os.path.exists(USERS_FILE):
-        # Safety: If file is missing, create a blank one immediately
-        with open(USERS_FILE, 'w') as f:
-            json.dump({}, f)
+    try:
+        if not os.path.exists(USERS_FILE):
+            with open(USERS_FILE, 'w') as f:
+                json.dump({}, f)
+            return {}
+            
+        with open(USERS_FILE, 'r') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                print("System Error: users.json is corrupted.")
+                return {}
+    except Exception as e:
+        print(f"Critical Registry Error: {e}")
         return {}
-        
-    with open(USERS_FILE, 'r') as f:
-        try:
-            return json.load(f)
-        except json.JSONDecodeError:
-            return {} # Return empty if file is corrupted
+    
+    
 def save_user_to_json(username, password):
     users = load_all_users()
     users[username] = generate_password_hash(password)
@@ -1192,18 +1210,20 @@ def switch_workspace():
     
 @app.route('/read-file', methods=['GET'])
 def read_file():
-    global active_mission
+    if 'user' not in session:
+        return jsonify({"content": "Access Denied"}), 401
+
     file_name = request.args.get('name')
-    file_path = os.path.join(HISTORY_DIR, active_mission, file_name)
+    # Look inside: history/user_data/username/active_mission/file
+    user_home = os.path.join(HISTORY_DIR, "user_data", session['user'])
+    file_path = os.path.join(user_home, active_mission, file_name)
     
     try:
-        # Using 'errors="ignore"' to keep the system stable
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             content = f.read()
         return jsonify({"content": content})
     except Exception as e:
-        return jsonify({"content": f"Error reading file: {str(e)}"}), 500
-
+        return jsonify({"content": f"File not found in your private sector."}), 404
 
 @app.route('/run-eva', methods=['POST'])
 def run_eva():
