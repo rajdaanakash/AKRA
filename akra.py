@@ -608,67 +608,85 @@ def fetch_external_data(category, query):
 
         except Exception as e:
             return f"Mapping sector error: {str(e)}"
-        
-def generate_mission_pdf(content):
-    """BSc Level PDF Generator with Multi-Color Syntax Highlighting (Sanitized)"""
+    
+def generate_mission_pdf(content, client):
     pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Use standard Helvetica (no extra .ttf file needed)
-    pdf.set_font("helvetica", size=11)
+    # --- 1. SYSTEM HEADER ---
+    try:
+        pdf.image('logo.png', 10, 8, 15) # Ensure logo.png is in your repo
+    except:
+        pass
+    
+    pdf.set_font("helvetica", 'B', size=14)
+    pdf.set_text_color(0, 80, 158) # AKRA Blue
+    pdf.cell(0, 10, "AKRA SYSTEM: MISSION LOG", ln=1, align='C')
+    pdf.set_font("helvetica", 'I', size=8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 5, f"Operator: Akash | {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
+    pdf.ln(10)
 
-    # Split content by markdown code fences
+    # --- 2. CONTENT PROCESSING ---
     parts = re.split(r'(```[\s\S]*?```)', content)
 
     for part in parts:
         if part.startswith('```'):
-            # --- CODE BLOCK STYLING ---
+            # CODE BLOCK SETUP
             lines = part.split('\n')
             lang = lines[0].replace('```', '').strip() or 'python'
             code_text = '\n'.join(lines[1:-1])
 
-            # Calculate box height (approx 5 units per line)
-            box_height = (len(lines) * 5) + 5
-            pdf.set_fill_color(30, 30, 30) # Dark Gray background
-            pdf.rect(pdf.get_x(), pdf.get_y(), 190, box_height, 'F')
-
             pdf.set_font("courier", 'B', size=9)
-
+            
             try:
                 lexer = get_lexer_by_name(lang)
             except:
                 lexer = get_lexer_by_name('text')
 
-            tokens = lexer.get_tokens(code_text)
+            code_lines = code_text.split('\n')
 
-            for ttype, value in tokens:
-                # 1. SANITIZE EACH TOKEN
-                # This removes characters that 'latin-1' (Standard PDF) cannot handle
-                safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
+            for line in code_lines:
+                # Page Break Logic
+                if pdf.get_y() > 270:
+                    pdf.add_page()
+                    pdf.set_font("courier", 'B', size=9)
 
-                # 2. MAP COLORS
-                if str(ttype).startswith('Token.Keyword'):
-                    pdf.set_text_color(255, 123, 114) # Red-ish
-                elif str(ttype).startswith('Token.Literal.String'):
-                    pdf.set_text_color(165, 214, 255) # Blue-ish
-                elif str(ttype).startswith('Token.Comment'):
-                    pdf.set_text_color(139, 148, 158) # Gray
-                else:
-                    pdf.set_text_color(255, 255, 255) # White
+                curr_y = pdf.get_y()
                 
-                pdf.write(5, safe_value)
+                # SOLID BACKGROUND LOGIC (0.2mm overlap to remove white gaps)
+                pdf.set_fill_color(30, 30, 30) # Dark Gray
+                pdf.rect(10, curr_y, 190, 5.2, 'F') 
 
-            pdf.ln(10) # Space after code block
+                line_tokens = lexer.get_tokens(line)
+                for ttype, value in line_tokens:
+                    safe_value = value.encode('latin-1', 'ignore').decode('latin-1')
+                    
+                    # SYNTAX COLORING
+                    if str(ttype).startswith('Token.Keyword'):
+                        pdf.set_text_color(255, 123, 114) # Red-ish
+                    elif str(ttype).startswith('Token.Literal.String'):
+                        pdf.set_text_color(165, 214, 255) # Blue-ish
+                    elif str(ttype).startswith('Token.Comment'):
+                        pdf.set_text_color(139, 148, 158) # Gray
+                    else:
+                        pdf.set_text_color(240, 240, 240) # Off-white
+                    
+                    pdf.write(5, safe_value)
+                
+                pdf.ln(5) # Standard line height movement
+
+            pdf.set_text_color(0, 0, 0)
+            pdf.ln(5)
         else:
-            # --- REGULAR TEXT STYLING ---
+            # REGULAR TEXT STYLING
             pdf.set_text_color(0, 0, 0)
             pdf.set_font("helvetica", size=11)
-            
-            # 3. SANITIZE REGULAR TEXT
             safe_part = part.strip().encode('latin-1', 'ignore').decode('latin-1')
-            
-            pdf.multi_cell(0, 6, txt=safe_part)
-            pdf.ln(2)
+            if safe_part:
+                pdf.multi_cell(0, 6, txt=safe_part)
+                pdf.ln(4)
 
     filename = f"mission_report_{datetime.now().strftime('%H%M%S')}.pdf"
     pdf.output(filename)
@@ -679,49 +697,42 @@ def process_eva_command(query):
     global active_mission
     query = query.lower().strip()
     
-    # --- NEW SMART SPLITTING LOGIC ---
-    # We only split if 'and' is followed by a known ACTION word.
-    # If 'and' is just joining two names (Tom and Jerry), we keep it together.
+    # 1. These words trigger a NEW task
+    action_keywords = [
+        "search", "find", "create", "open", "go to", "scrape", "note", 
+        "generate", "write", "save", "news", "nearby", "where", 
+        "image", "img", "show", "tell me", "calculate"
+    ]
     
-    action_keywords = ["search", "find", "create", "open", "go to", "scrape", "note", "generate","write","save","news","nearby","where","image","img","show"]
-    
-    # 1. First, protect 'and' within common phrases
-    # 2. We look for 'and' only when it's followed by an action
+    # 2. Smart Logic: Join sentences unless a keyword appears
+    raw_parts = re.split(r',\s*|\band\b', query) # Also splits on the word 'and'
     final_tasks = []
     
-    # Initial split by comma (commas are usually safe separators)
-    raw_parts = re.split(r',\s*', query)
-    
+    temp_command = ""
     for part in raw_parts:
-        # Check if 'and' exists and if it's followed by an action keyword
-        sub_parts = re.split(r'\s+and\s+', part)
+        part = part.strip()
+        if not part: continue
         
-        combined_phrase = ""
-        for i, sub in enumerate(sub_parts):
-            # If it's the first part, start the phrase
-            if i == 0:
-                combined_phrase = sub
+        # Check if this segment starts with an action word
+        is_new_action = any(part.startswith(kw) for kw in action_keywords)
+        
+        if is_new_action:
+            if temp_command:
+                final_tasks.append(temp_command.strip())
+            temp_command = part
+        else:
+            if temp_command:
+                temp_command += f" {part}" # Keep building the sentence
             else:
-                # Does the next part start with an action? 
-                # (e.g., "search for Tom and find Jerry")
-                starts_with_action = any(sub.startswith(kw) for kw in action_keywords)
-                
-                if starts_with_action:
-                    # It's a new command! Save the old one and start fresh.
-                    final_tasks.append(combined_phrase.strip())
-                    combined_phrase = sub
-                else:
-                    # It's just a name! (e.g., "Tom and Jerry")
-                    combined_phrase += f" and {sub}"
-        
-        final_tasks.append(combined_phrase.strip())
+                temp_command = part
 
-    # --- EXECUTION LOOP ---
+    if temp_command:
+        final_tasks.append(temp_command.strip())
+
+    # --- EXECUTION ---
     responses = []
     current_context = "" 
-    
     for task in final_tasks:
-        if not task: continue
         res = execute_single_command(task, context=current_context)
         if res:
             current_context = res
@@ -1224,6 +1235,15 @@ def read_file():
         return jsonify({"content": content})
     except Exception as e:
         return jsonify({"content": f"File not found in your private sector."}), 404
+
+@app.route('/robots.txt')
+def robots_txt():
+    return send_from_directory(app.static_folder, 'robots.txt')
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    return send_from_directory(app.static_folder, 'sitemap.xml')
+
 
 @app.route('/run-eva', methods=['POST'])
 def run_eva():
