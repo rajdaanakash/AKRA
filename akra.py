@@ -1258,9 +1258,6 @@ def run_eva():
         return jsonify({"response": "Sir, please login to establish a secure neural link.", "status": 401}), 401
 
     data = request.get_json(silent=True) or {}
-
-    data = request.get_json(silent=True) or {}
-    data = request.get_json(silent=True) or {}
     image_data = data.get("image_data")
     user_query = data.get("transcript", "").strip()
     
