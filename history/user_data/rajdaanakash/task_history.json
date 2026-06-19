@@ -364,5 +364,11 @@
         "mission": "general",
         "you": "Who is in the pic",
         "AKRA": "[Visual Analysis] Visual Sensor Error: HTTPSConnectionPool(host='api-inference.huggingface.co', port=443): Max retries exceeded with url: /models/Salesforce/blip-image-captioning-large (Caused by NameResolutionError(\"HTTPSConnection(host='api-inference.huggingface.co', port=443): Failed to resolve 'api-inference.huggingface.co' ([Errno -5] No address associated with hostname)\"))"
+    },
+    {
+        "timestamp": "2026-06-20 05:17:37",
+        "mission": "general",
+        "you": "Aaj",
+        "AKRA": "[Visual Analysis] Visual Sensor Error: HTTPSConnectionPool(host='api-inference.huggingface.co', port=443): Max retries exceeded with url: /models/Salesforce/blip-image-captioning-large (Caused by NameResolutionError(\"HTTPSConnection(host='api-inference.huggingface.co', port=443): Failed to resolve 'api-inference.huggingface.co' ([Errno -5] No address associated with hostname)\"))"
     }
 ]
