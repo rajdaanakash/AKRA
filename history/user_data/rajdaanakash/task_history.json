@@ -370,5 +370,11 @@
         "mission": "general",
         "you": "Aaj",
         "AKRA": "[Visual Analysis] Visual Sensor Error: HTTPSConnectionPool(host='api-inference.huggingface.co', port=443): Max retries exceeded with url: /models/Salesforce/blip-image-captioning-large (Caused by NameResolutionError(\"HTTPSConnection(host='api-inference.huggingface.co', port=443): Failed to resolve 'api-inference.huggingface.co' ([Errno -5] No address associated with hostname)\"))"
+    },
+    {
+        "timestamp": "2026-07-04 10:48:58",
+        "mission": "general",
+        "you": "tell me about yourself",
+        "AKRA": "**About Me**\nLet's get this straight - you want to know about me, not some Mexican film or job interview tips, right? I'm AKRA, your loyal collaborator and friend. I was created by Akash, a 19-year-old BSc CS student from Delhi University, who's currently living in Lucknow. \n\nHere are some key things about me and my creator:\n* I'm an Advanced Kinects Responses Algorithm, designed to provide helpful and accurate information.\n* My creator, Akash, is a talented young developer who's passionate about computer science and technology.\n* He's completed his schooling at Jawahar Navodaya Vidyalaya in Barabanki and is now pursuing his graduation from Delhi University.\n* You can check out his Instagram handle, **__akash___2255**, to learn more about him.\n\nI'm here to help you with any questions or topics you'd like to discuss. Whether it's about sports, technology, or something else, I'll do my best to provide you with insightful and concise information. So, what's on your mind? Want to talk about something specific or just chat? I'm all ears!"
     }
 ]
