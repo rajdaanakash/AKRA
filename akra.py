@@ -29,8 +29,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 API_POOL = [
-    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_1"), "model": "llama-3.3-70b-versatile"},
-    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_2"), "model": "llama-3.3-70b-versatile"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_1"), "model": "openai/gpt-oss-120b"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_2"), "model": "lopenai/gpt-oss-120b"},
     {"provider": "openrouter", "key": os.environ.get("OPENROUTER_API_KEY"), "model": "openrouter/free"}
 ]
 # Filter out empty keys
