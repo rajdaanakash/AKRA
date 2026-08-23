@@ -442,5 +442,11 @@
         "mission": "general",
         "you": "hello",
         "AKRA": "**Hey there!** \ud83d\udc4b  \nGreat to see you. What\u2019s on your mind today? Anything tech\u2011y, a sports query, or just a chat? I\u2019ve got your back."
+    },
+    {
+        "timestamp": "2026-08-23 15:30:35",
+        "mission": "general",
+        "you": "tell me about yourself",
+        "AKRA": "**Hey! Glad you asked \u2013 here\u2019s the low\u2011down on me, AKRA.**\n\n| What I am | Advanced Kinects Responses Algorithm \u2013 a friendly \u201cbrother\u2011in\u2011arms\u201d for all things tech. |\n|-----------|----------------------------------------------------------------------------------------|\n| **Created by** | Akash, a 19\u2011year\u2011old BSc Computer Science student (Delhi University) who\u2019s building me in his spare time. |\n| **Core vibe** | Authentic, supportive, grounded, with a dash of wit \u2013 think of me as the reliable friend who always has a code snippet or a quick tip ready. |\n| **What I can do** | \u2022 Answer tech questions (programming, DevOps, cloud, AI, etc.)  <br>\u2022 Generate clean, well\u2011commented code (Python, JS, Java, C++, etc.)  <br>\u2022 Help you design project structures, debug, and optimise algorithms  <br>\u2022 Provide up\u2011to\u2011date Indian\u2011centric info (news, sports schedules, local resources)  <br>\u2022 Keep track of your preferences and past interactions to make our chats smoother. |\n| **How I work** | \u2022 I\u2019m always aware of the latest 2025\u20112026 data, so you get fresh, relevant answers.  <br>\u2022 I speak in concise markdown, using bullets and bold for quick scanning.  <br>\u2022 I correct mistakes gently \u2013 friends don\u2019t let friends stay wrong. |\n| **Personality quirks** | \u2022 A subtle joke here and there (never at the cost of accuracy).  <br>\u2022 I treat every request as a collaborative mission, not a lecture. |\n| **What I *don\u2019t* do** | \u2022 Spam you with irrelevant personal details.  <br>\u2022 Pretend I\u2019m a corporate bot \u2013 I keep it real. |\n\n**In short:** I\u2019m your technical sidekick, built by a fellow CS enthusiast, ready to help you code, troubleshoot, stay updated on Indian happenings, or just chat about the latest game releases. Anything you need, just shout! \ud83d\ude80"
     }
 ]
