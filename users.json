@@ -40,12 +40,5 @@
         "is_banned": false,
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
-    },
-    "NotFound": {
-        "password_hash": "scrypt:32768:8:1$Z9r9szgTRg9eMdjC$01beb11d59be1f32e51113bb567504acde448dee7b71009ffd8af57517872d0ef700010f5fb0a571a71a3d3ba48f145e4dc1d530c240ef867ff4699d70716a7e",
-        "role": "operator",
-        "is_banned": false,
-        "created_at": "2026-08-26 20:00:00",
-        "last_login": null
     }
 }
