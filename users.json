@@ -16,7 +16,7 @@
     "Veerkr": {
         "password_hash": "scrypt:32768:8:1$ItoMbRNIQ0bSqOF3$e657d1a830e0f56bbd5bd8aac542257e136d9cb23284c189d38e0c12e61cf6f2db90d3f9c1b69311280517bc36af0378b088bf29aa85db5a587306a25676b976",
         "role": "operator",
-        "is_banned": true,
+        "is_banned": false,
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
     },
