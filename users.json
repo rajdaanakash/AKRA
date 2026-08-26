@@ -39,6 +39,13 @@
         "role": "operator",
         "is_banned": false,
         "created_at": "2026-08-26 16:50:29",
+        "last_login": "2026-08-26 16:50:37"
+    },
+    "aryan1234": {
+        "password_hash": "scrypt:32768:8:1$rwv1LqOUBrAFrvuj$40d9bc6056ba01aad8b4f087e28512d36de1b898e4e7560e372141cf352fbff4a754c75b262d78f5c477ffa057aa7537edf9f81055d0993ca49aeda3bc1a8a9f",
+        "role": "operator",
+        "is_banned": false,
+        "created_at": "2026-08-26 16:51:14",
         "last_login": null
     }
 }
