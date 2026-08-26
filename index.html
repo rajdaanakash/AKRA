@@ -50,6 +50,13 @@
                 </div>
             </div>
 
+            <!-- New Chat Action Button -->
+            <div class="new-chat-wrap">
+                <button class="new-chat-btn" onclick="startNewChat()">
+                    <span>➕</span> Start New Chat
+                </button>
+            </div>
+
             <!-- Navigation Links -->
             <nav class="sidebar-nav">
                 <div class="nav-group-title">MAIN MENU</div>
@@ -71,16 +78,21 @@
                 </button>
             </nav>
 
-            <!-- Quick Settings in Sidebar -->
+            <!-- Quick Settings & Sector Routing in Sidebar -->
             <div class="sidebar-settings">
-                <div class="nav-group-title">SETTINGS & ROUTING</div>
+                <div class="nav-group-title">SECTOR WORKSPACES</div>
                 
                 <div class="setting-row">
                     <label>🗂️ Active Sector</label>
-                    <select id="workspace-select" onchange="changeWorkspaceSelect(this.value)">
-                        <option value="general" selected>General</option>
-                    </select>
+                    <div class="sector-input-group">
+                        <select id="workspace-select" onchange="changeWorkspaceSelect(this.value)">
+                            <option value="general" selected>GENERAL</option>
+                        </select>
+                        <button class="add-sector-btn" onclick="promptNewSector()" title="Create New Sector">＋</button>
+                    </div>
                 </div>
+
+                <div class="nav-group-title" style="margin-top: 10px;">HARDWARE & PERSONA</div>
 
                 <div class="setting-row">
                     <label>🎭 Persona</label>
@@ -128,11 +140,14 @@
                     </button>
                     <div class="topbar-title-group">
                         <h1 class="topbar-title" id="page-title">Chat Console</h1>
-                        <span class="sector-badge" id="topbar-sector-badge">Sector: General</span>
+                        <span class="sector-badge" id="topbar-sector-badge" onclick="toggleSidebar(true)" title="Click to switch sector">Sector: GENERAL</span>
                     </div>
                 </div>
 
                 <div class="topbar-right">
+                    <button class="topbar-btn new-chat-topbar-btn" onclick="startNewChat()" title="Start fresh conversation">
+                        <span>➕</span> <span class="hide-mobile">New Chat</span>
+                    </button>
                     <div class="live-status-pill" id="system-status-indicator">
                         <span class="status-dot"></span>
                         <span id="status-text">Ready</span>
@@ -148,13 +163,13 @@
                 <div class="chat-container">
                     <!-- Chat Message Stream -->
                     <div id="chat-feed" class="chat-messages-area">
-                        <!-- Welcome Hero Box -->
+                        <!-- Welcome Hero Box (Shown on fresh chat or empty sector) -->
                         <div class="welcome-hero" id="welcome-hero">
                             <div class="hero-icon-wrap">
                                 <img src="akra.png" alt="AKRA" class="hero-logo">
                             </div>
                             <h2>How can I assist you today?</h2>
-                            <p>Ask anything, attach code/screenshots, or give a voice command.</p>
+                            <p id="welcome-hero-subtitle">Ask anything, attach code/screenshots, or give a voice command.</p>
                             
                             <div class="prompt-chips-grid">
                                 <button class="prompt-chip" onclick="quickPrompt('What are the latest news updates in India today?')">
@@ -165,7 +180,7 @@
                                     <span class="chip-icon">🎬</span>
                                     <span class="chip-text">New Movie Releases</span>
                                 </button>
-                                <button class="prompt-chip" onclick="quickPrompt('Create a new project sector')">
+                                <button class="prompt-chip" onclick="promptNewSector()">
                                     <span class="chip-icon">📁</span>
                                     <span class="chip-text">Create Project Sector</span>
                                 </button>
@@ -222,7 +237,7 @@
                     <div class="panel-header">
                         <div>
                             <h2>📜 Mission Logs & Archive</h2>
-                            <p class="panel-subtitle">History of previous conversation turns and generated codes</p>
+                            <p class="panel-subtitle">Persistent history of all recorded chats, sectors, and generated codes</p>
                         </div>
                         <div class="panel-actions">
                             <button class="btn btn-secondary" onclick="loadHistory()">🔄 Refresh</button>
@@ -230,6 +245,9 @@
                             <button class="btn btn-danger" onclick="clearAllHistory()">🗑️ Wipe Logs</button>
                         </div>
                     </div>
+
+                    <!-- Sector Filter Tab Pills -->
+                    <div class="sector-tabs-row" id="history-sector-tabs"></div>
 
                     <div class="filter-bar">
                         <input type="text" id="history-search-input" placeholder="Search mission history by keyword..." oninput="filterHistoryLogs()">

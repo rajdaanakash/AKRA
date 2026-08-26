@@ -210,9 +210,39 @@ html, body {
     box-shadow: 0 0 6px var(--success);
 }
 
+/* New Chat Button */
+.new-chat-wrap {
+    padding: 6px 14px;
+}
+
+.new-chat-btn {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(0, 210, 255, 0.08);
+    border: 1px dashed var(--border-accent);
+    color: var(--primary);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.new-chat-btn:hover {
+    background: rgba(0, 210, 255, 0.18);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--primary-glow);
+    transform: translateY(-1px);
+}
+
 /* Sidebar Navigation */
 .sidebar-nav {
-    padding: 10px 14px;
+    padding: 6px 14px;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -271,7 +301,7 @@ html, body {
 
 /* Sidebar Settings Section */
 .sidebar-settings {
-    padding: 10px 14px;
+    padding: 6px 14px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -289,6 +319,35 @@ html, body {
     font-size: 0.72rem;
     color: var(--text-muted);
     font-weight: 500;
+}
+
+.sector-input-group {
+    display: flex;
+    gap: 6px;
+}
+
+.sector-input-group select {
+    flex-grow: 1;
+}
+
+.add-sector-btn {
+    width: 34px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--primary);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.add-sector-btn:hover {
+    background: var(--primary);
+    color: #000;
 }
 
 .setting-row select {
@@ -403,15 +462,47 @@ html, body {
     background: rgba(0, 210, 255, 0.08);
     color: var(--primary);
     border: 1px solid var(--border-accent);
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--radius-full);
-    font-weight: 500;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.sector-badge:hover {
+    background: rgba(0, 210, 255, 0.2);
 }
 
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+}
+
+.topbar-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.new-chat-topbar-btn {
+    background: rgba(0, 210, 255, 0.1);
+    border-color: var(--border-accent);
+    color: var(--primary);
+}
+
+.new-chat-topbar-btn:hover {
+    background: var(--primary);
+    color: #000;
 }
 
 .live-status-pill {
@@ -668,6 +759,29 @@ html, body {
     background: var(--bg-card-hover);
     color: var(--primary);
     border-color: var(--primary);
+}
+
+/* PDF Download Button inside Chat Bubble */
+.download-pdf-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 210, 255, 0.12);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    margin-top: 8px;
+    transition: all 0.2s ease;
+}
+
+.download-pdf-btn:hover {
+    background: var(--primary);
+    color: #000;
+    box-shadow: 0 0 15px var(--primary-glow);
 }
 
 /* Typing Indicator */
@@ -951,6 +1065,34 @@ html, body {
     box-shadow: 0 0 15px var(--primary-glow);
 }
 
+/* --- SECTOR TABS IN MISSION LOGS --- */
+.sector-tabs-row {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    margin-bottom: 12px;
+}
+
+.sector-tab-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: var(--radius-full);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.sector-tab-pill:hover, .sector-tab-pill.active {
+    background: rgba(0, 210, 255, 0.15);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
 /* --- GENERIC CONTENT PANELS (Logs, Notes, Admin) --- */
 .content-panel {
     max-width: 950px;
@@ -1077,6 +1219,7 @@ html, body {
 .card-sector {
     color: var(--primary);
     font-weight: 600;
+    cursor: pointer;
 }
 
 .card-turn {

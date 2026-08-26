@@ -6,6 +6,7 @@ let active_mission = "general";
 let attachedImageData = null;
 let allHistoryLogs = [];
 let allAdminUsers = [];
+let selectedHistorySector = "ALL";
 
 // --- INITIALIZATION & AUTHENTICATION ---
 
@@ -54,9 +55,18 @@ async function checkAuth() {
 window.onload = async () => {
     const authenticated = await checkAuth();
     if (authenticated) {
-        fetchDirectories();
-        loadRecentChatFeed();
+        await fetchDirectories();
         setupInputHandlers();
+
+        // Check if user is returning in a fresh session or has ongoing session
+        const sessionActive = sessionStorage.getItem('akra_session_started');
+        if (!sessionActive) {
+            // Fresh Window on Return (Like Image 2)
+            sessionStorage.setItem('akra_session_started', 'true');
+            startNewChat(false);
+        } else {
+            loadSectorChatFeed(active_mission);
+        }
     }
 };
 
@@ -123,7 +133,54 @@ function setSystemStatus(text, isBusy = false) {
     }
 }
 
-// --- WORKSPACE DIRECTORIES ---
+// --- FRESH SESSION & NEW CHAT (Image 2) ---
+
+function startNewChat(showToastMsg = true) {
+    const chatFeed = document.getElementById('chat-feed');
+    if (!chatFeed) return;
+
+    chatFeed.innerHTML = `
+        <div class="welcome-hero" id="welcome-hero">
+            <div class="hero-icon-wrap">
+                <img src="akra.png" alt="AKRA" class="hero-logo">
+            </div>
+            <h2>How can I assist you today?</h2>
+            <p id="welcome-hero-subtitle">Active in sector: <strong>${active_mission.toUpperCase()}</strong>. Ask anything, attach screenshots, or speak.</p>
+            
+            <div class="prompt-chips-grid">
+                <button class="prompt-chip" onclick="quickPrompt('What are the latest news updates in India today?')">
+                    <span class="chip-icon">📰</span>
+                    <span class="chip-text">Latest News in India</span>
+                </button>
+                <button class="prompt-chip" onclick="quickPrompt('What are the latest movie releases in India?')">
+                    <span class="chip-icon">🎬</span>
+                    <span class="chip-text">New Movie Releases</span>
+                </button>
+                <button class="prompt-chip" onclick="promptNewSector()">
+                    <span class="chip-icon">📁</span>
+                    <span class="chip-text">Create Project Sector</span>
+                </button>
+                <button class="prompt-chip" onclick="quickPrompt('create pdf')">
+                    <span class="chip-icon">📄</span>
+                    <span class="chip-text">Export Mission PDF</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    const input = document.getElementById('userPrompt');
+    if (input) {
+        input.value = "";
+        input.style.height = "auto";
+    }
+    clearAttachment();
+
+    if (showToastMsg) {
+        showToast(`Fresh session started. Past chats saved in Mission Logs.`);
+    }
+}
+
+// --- WORKSPACE & SECTOR MANAGEMENT ---
 
 async function fetchDirectories() {
     try {
@@ -139,7 +196,7 @@ async function fetchDirectories() {
             const opt = document.createElement('option');
             opt.value = dir;
             opt.innerText = dir.replace(/_/g, ' ').toUpperCase();
-            if (dir === active_mission) opt.selected = true;
+            if (dir.toLowerCase() === active_mission.toLowerCase()) opt.selected = true;
             select.appendChild(opt);
         });
 
@@ -150,17 +207,40 @@ async function fetchDirectories() {
 }
 
 async function changeWorkspaceSelect(dirName) {
-    active_mission = dirName;
+    active_mission = dirName.toLowerCase().trim();
     updateSectorBadge(dirName);
+    
     try {
         await fetch('/switch-workspace', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ directory: dirName })
         });
-        showToast(`Sector switched to: ${dirName.toUpperCase()}`);
+        showToast(`Switched to sector: ${dirName.toUpperCase()}`);
+        loadSectorChatFeed(active_mission);
     } catch (e) {
         console.error("Error switching workspace:", e);
+    }
+}
+
+async function promptNewSector() {
+    const sectorName = prompt("Enter a name for the new project sector (e.g. movies, research, study):");
+    if (!sectorName || !sectorName.trim()) return;
+
+    const cleanName = sectorName.trim().replace(/\s+/g, '_').toLowerCase();
+    try {
+        await fetch('/switch-workspace', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ directory: cleanName })
+        });
+
+        active_mission = cleanName;
+        await fetchDirectories();
+        startNewChat(false);
+        showToast(`New sector '${cleanName.toUpperCase()}' created and activated!`);
+    } catch (e) {
+        showToast("Failed to create sector.");
     }
 }
 
@@ -168,6 +248,45 @@ function updateSectorBadge(sectorName) {
     const badge = document.getElementById('topbar-sector-badge');
     if (badge) {
         badge.innerText = `Sector: ${sectorName.toUpperCase()}`;
+    }
+}
+
+// --- SECTOR-SPECIFIC CHAT FEED CONTROLLER ---
+
+async function loadSectorChatFeed(sectorName) {
+    try {
+        const response = await fetch('/api/chat/history');
+        if (!response.ok) return;
+        const history = await response.json();
+        
+        if (!Array.isArray(history) || history.length === 0) {
+            startNewChat(false);
+            return;
+        }
+
+        // Filter messages for this specific sector
+        const targetSector = (sectorName || 'general').toLowerCase();
+        const sectorMessages = history.filter(item => {
+            const itemSector = (item.mission || 'general').toLowerCase();
+            return itemSector === targetSector;
+        });
+
+        if (sectorMessages.length === 0) {
+            // No messages in this sector yet -> show clean fresh hero (Image 2)
+            startNewChat(false);
+        } else {
+            // Render previous recorded messages from this sector
+            const chatFeed = document.getElementById('chat-feed');
+            chatFeed.innerHTML = ""; // Clear existing
+
+            sectorMessages.forEach(item => {
+                if (item.you) appendMessage("user", item.you, item.timestamp);
+                if (item.AKRA) appendMessage("akra", item.AKRA, item.timestamp);
+            });
+            scrollChatBottom();
+        }
+    } catch (err) {
+        console.error("Error loading sector chat feed:", err);
     }
 }
 
@@ -195,10 +314,20 @@ function setupInputHandlers() {
 function formatMarkdown(text) {
     if (!text) return "";
 
+    // 1. Convert MISSION_PDF_READY:<filename> into interactive download buttons
+    if (text.includes("MISSION_PDF_READY:")) {
+        text = text.replace(/MISSION_PDF_READY:\s*([^\s\n]+)/g, function(match, filename) {
+            return `Sir, your Mission Report PDF is ready.\n\n<a href="/download/${filename}" target="_blank" class="download-pdf-btn">📄 Download Mission PDF (${filename})</a>`;
+        });
+    }
+
     let safe = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+
+    // Restore PDF download button HTML
+    safe = safe.replace(/&lt;a href="\/download\/([^"]+)" target="_blank" class="download-pdf-btn"&gt;([\s\S]*?)&lt;\/a&gt;/g, '<a href="/download/$1" target="_blank" class="download-pdf-btn">$2</a>');
 
     // Code Blocks: ```lang code ```
     safe = safe.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, function(match, lang, code) {
@@ -251,12 +380,12 @@ function copyCode(elementId) {
     }
 }
 
-// --- CHAT STREAM FEED CONTROLLER ---
+// --- CHAT MESSAGE RENDERING ---
 
 function appendMessage(sender, text, timestamp = null, imageData = null) {
     const chatFeed = document.getElementById('chat-feed');
     const hero = document.getElementById('welcome-hero');
-    if (hero) hero.style.display = "none";
+    if (hero) hero.remove(); // Remove welcome banner when chat begins
 
     const isUser = (sender.toLowerCase() === "user" || sender.toLowerCase() === "operator");
     const timeFormatted = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -304,24 +433,6 @@ function scrollChatBottom() {
     const chatFeed = document.getElementById('chat-feed');
     if (chatFeed) {
         chatFeed.scrollTop = chatFeed.scrollHeight;
-    }
-}
-
-async function loadRecentChatFeed() {
-    try {
-        const response = await fetch('/api/chat/history');
-        if (!response.ok) return;
-        const history = await response.json();
-        
-        if (Array.isArray(history) && history.length > 0) {
-            const recentLogs = history.slice(-20);
-            recentLogs.forEach(item => {
-                if (item.you) appendMessage("user", item.you, item.timestamp);
-                if (item.AKRA) appendMessage("akra", item.AKRA, item.timestamp);
-            });
-        }
-    } catch (err) {
-        console.error("Error loading chat feed:", err);
     }
 }
 
@@ -445,11 +556,6 @@ async function sendTextPrompt() {
         const data = await res.json();
         let responseText = data.response || "No response.";
 
-        if (responseText.includes("MISSION_PDF_READY:")) {
-            const fileName = responseText.split(":")[1].trim();
-            responseText = `Sir, your Mission Report PDF is ready.\n\n[📄 Download Mission PDF](/download/${fileName})`;
-        }
-
         appendMessage("akra", responseText);
         setSystemStatus("Ready", false);
 
@@ -458,6 +564,7 @@ async function sendTextPrompt() {
         if (data.audio === "frontend" || speakerMode === "Frontend") {
             const cleanText = responseText
                 .replace(/```[\s\S]*?```/g, 'Code snippet provided.')
+                .replace(/MISSION_PDF_READY:\s*[^\s]+/g, 'Mission PDF is ready for download.')
                 .replace(/!\[.*?\]\(.*?\)/g, '')
                 .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
                 .replace(/<[^>]*>?/gm, '');
@@ -618,7 +725,7 @@ function syncIO() {
     });
 }
 
-// --- MISSION LOGS & ARCHIVE ---
+// --- MISSION LOGS & SECTOR TABS ---
 
 async function loadHistory() {
     const container = document.getElementById('history-list');
@@ -633,10 +740,35 @@ async function loadHistory() {
 
         const data = await res.json();
         allHistoryLogs = Array.isArray(data) ? data : [];
+        
+        renderHistorySectorTabs(allHistoryLogs);
         renderHistoryLogs(allHistoryLogs);
     } catch (err) {
         if (container) container.innerHTML = `<div class="empty-state">Failed to load logs.</div>`;
     }
+}
+
+function renderHistorySectorTabs(logs) {
+    const tabsContainer = document.getElementById('history-sector-tabs');
+    if (!tabsContainer) return;
+
+    // Collect all unique sectors
+    const sectorsSet = new Set(["ALL"]);
+    logs.forEach(l => {
+        if (l.mission) sectorsSet.add(l.mission.toUpperCase());
+    });
+
+    tabsContainer.innerHTML = Array.from(sectorsSet).map(sec => `
+        <button class="sector-tab-pill ${selectedHistorySector === sec ? 'active' : ''}" onclick="selectHistorySector('${sec}')">
+            ${sec}
+        </button>
+    `).join('');
+}
+
+function selectHistorySector(sector) {
+    selectedHistorySector = sector;
+    renderHistorySectorTabs(allHistoryLogs);
+    filterHistoryLogs();
 }
 
 function renderHistoryLogs(logs) {
@@ -644,7 +776,7 @@ function renderHistoryLogs(logs) {
     if (!container) return;
 
     if (!logs || logs.length === 0) {
-        container.innerHTML = `<div class="empty-state">No mission records in this sector.</div>`;
+        container.innerHTML = `<div class="empty-state">No mission records found.</div>`;
         return;
     }
 
@@ -653,7 +785,7 @@ function renderHistoryLogs(logs) {
         <div class="history-card">
             <div class="card-meta">
                 <span>⏱️ ${item.timestamp || 'N/A'}</span>
-                <span class="card-sector">Sector: ${(item.mission || 'General').toUpperCase()}</span>
+                <span class="card-sector" onclick="changeWorkspaceSelect('${item.mission || 'general'}')">Sector: ${(item.mission || 'General').toUpperCase()} ↗</span>
             </div>
             <div class="card-turn user-turn">
                 <strong>You:</strong> ${formatMarkdown(item.you || '')}
@@ -667,15 +799,20 @@ function renderHistoryLogs(logs) {
 
 function filterHistoryLogs() {
     const query = (document.getElementById('history-search-input').value || '').toLowerCase().trim();
-    if (!query) {
-        renderHistoryLogs(allHistoryLogs);
-        return;
+    
+    let filtered = allHistoryLogs;
+    if (selectedHistorySector !== "ALL") {
+        filtered = filtered.filter(item => (item.mission || 'general').toUpperCase() === selectedHistorySector);
     }
-    const filtered = allHistoryLogs.filter(item => 
-        (item.you && item.you.toLowerCase().includes(query)) ||
-        (item.AKRA && item.AKRA.toLowerCase().includes(query)) ||
-        (item.mission && item.mission.toLowerCase().includes(query))
-    );
+
+    if (query) {
+        filtered = filtered.filter(item => 
+            (item.you && item.you.toLowerCase().includes(query)) ||
+            (item.AKRA && item.AKRA.toLowerCase().includes(query)) ||
+            (item.mission && item.mission.toLowerCase().includes(query))
+        );
+    }
+
     renderHistoryLogs(filtered);
 }
 
@@ -687,6 +824,7 @@ async function clearAllHistory() {
         if (res.ok) {
             allHistoryLogs = [];
             renderHistoryLogs([]);
+            startNewChat(false);
             showToast("Mission logs cleared.");
         }
     } catch (e) {
@@ -942,6 +1080,7 @@ function showToast(msg) {
 async function logout() {
     if (confirm("Terminate active session?")) {
         try {
+            sessionStorage.removeItem('akra_session_started');
             await fetch('/logout');
             window.location.href = "login.html";
         } catch (err) {
