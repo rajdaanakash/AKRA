@@ -27,13 +27,6 @@
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
     },
-    "Binoysaha2007": {
-        "password_hash": "scrypt:32768:8:1$yvyWk5px6Ze1ls3z$4536852d7fc56ebee8e90b579de57a583f612df4c1030b5f144ab903afa45d3b6783fbb098e8a741b0640da83efd3896b4b21d78d554d9f7b56041befc01087f",
-        "role": "operator",
-        "is_banned": false,
-        "created_at": "2026-08-26 16:48:56",
-        "last_login": null
-    },
     "binoy saha": {
         "password_hash": "scrypt:32768:8:1$n7iItJIgOnTRrDsF$f1fa5e54b4dfd74e9c4a9027437e5bb0db97c5f19017ad843558fa0787903ad2d7259fb4c2ba52a1505a9577ad248cb0d7059707bd9cb6f5d88ba16658386a7c",
         "role": "operator",
