@@ -40,9 +40,9 @@ os.makedirs(os.path.join(HISTORY_DIR, "user_data"), exist_ok=True)
 
 # --- AI API POOL CONFIGURATION ---
 raw_api_pool = [
-    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY"), "model": "llama-3.3-70b-versatile"},
-    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_1"), "model": "llama-3.3-70b-versatile"},
-    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_2"), "model": "llama-3.1-8b-instant"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY"), "model": "openai/gpt-oss-120b"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_1"), "model": "openai/gpt-oss-120b"},
+    {"provider": "groq", "key": os.environ.get("GROQ_API_KEY_2"), "model": "openai/gpt-oss-120b"},
     {"provider": "openrouter", "key": os.environ.get("OPENROUTER_API_KEY"), "model": "meta-llama/llama-3.3-70b-instruct:free"}
 ]
 API_POOL = [p for p in raw_api_pool if p.get("key")]
