@@ -26,12 +26,5 @@
         "is_banned": false,
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
-    },
-    "Dodo": {
-        "password_hash": "scrypt:32768:8:1$WPGk0u1DxCrR18gZ$0c881cc7756dd9b917fd77a38227bfe277311be7e1feb3093c21583a89c2b1842bab2f5d20ff226b6c88209d62778c021e0debcd813f04feb2a0f527c840ed5f",
-        "role": "operator",
-        "is_banned": false,
-        "created_at": "2026-08-26 20:00:00",
-        "last_login": null
     }
 }
