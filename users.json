@@ -8,7 +8,7 @@
     },
     "akash": {
         "password_hash": "scrypt:32768:8:1$9HbJFFz3nk1gUfV3$5ea51a9a29f87dc8acbd7940f8491c7157a977073023c3b1206c12629b396a44d6465e14e9e17bf73b5c702dcc1b0d8ca5a6a7143ac35fda0ef1a11f9f82392c",
-        "role": "operator",
+        "role": "admin",
         "is_banned": false,
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
