@@ -33,12 +33,5 @@
         "is_banned": false,
         "created_at": "2026-08-26 20:00:00",
         "last_login": null
-    },
-    "akash123": {
-        "password_hash": "scrypt:32768:8:1$HtV71rIckIYl7C42$aa83720da4ee69563436aef2c738d0e934a7380462ce67217dff215ca07f71454479d57dc45287c51d25e6272a0c1815a59f300efd0a7196ce14186acbe51678",
-        "role": "operator",
-        "is_banned": false,
-        "created_at": "2026-08-26 20:00:00",
-        "last_login": null
     }
 }
