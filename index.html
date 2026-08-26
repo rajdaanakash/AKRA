@@ -3,288 +3,329 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="AKRA: Advanced Kinects Responses Algorithm. A private AI assistant for mission logs and secure neural collaboration.">
-    <meta name="keywords" content="AKRA, AI Assistant, Neural Link, Mission Logs, Akash DU, Delhi University AI">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="AKRA: Advanced AI Assistant for Mission Logs & Workspace Collaboration.">
     <meta name="author" content="Akash">
 
-    <title>AKRA | Advanced AI System Interface</title>
+    <title>AKRA | AI Assistant</title>
 
-    <meta property="og:title" content="AKRA - Neural AI Interface">
-    <meta property="og:description" content="Secure your mission logs with the Advanced Kinects Responses Algorithm.">
-    <meta property="og:image" content="akra.png">
-
-    <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="akra.png">
+    <link rel="stylesheet" href="style.css">
     
-    <!-- Google Fonts for futuristic Sci-Fi typography -->
+    <!-- Modern Clean Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-
-    <script type="application/ld+json">
-        {
-         "@context": "https://schema.org",
-         "@type": "SoftwareApplication",
-         "name": "AKRA",
-         "operatingSystem": "Web",
-         "applicationCategory": "Artificial Intelligence",
-         "description": "Advanced Kinects Responses Algorithm created by Akash.",
-         "offers": {
-             "@type": "Offer",
-             "price": "0",
-             "priceCurrency": "INR"
-            }
-        }
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 
 <body>
-    <!-- Navigation Matrix -->
-    <nav class="navbar">
-        <div class="nav-brand">
-            <div class="nav-logo">AKRA SYSTEM</div>
-            <div class="system-pulse-dot"></div>
-        </div>
-        <div class="nav-links">
-            <a href="javascript:void(0)" class="nav-link active" id="nav-dashboard" onclick="showSection('dashboard')">Dashboard</a>
-            <a href="javascript:void(0)" class="nav-link" id="nav-history" onclick="showSection('history')">Mission Logs</a>
-            <a href="javascript:void(0)" class="nav-link" id="nav-notes" onclick="showSection('notes')">Permanent Notes</a>
-            <a href="javascript:void(0)" class="nav-link admin-nav-link" id="admin-nav-link" style="display: none;" onclick="showSection('admin')">⚡ Admin Console</a>
-            <div class="user-status-pill" id="user-status-pill">
-                <span class="user-role-badge" id="nav-user-role">OPERATOR</span>
-                <span class="user-name" id="nav-username">Connecting...</span>
-            </div>
-            <a href="javascript:void(0)" class="terminate-btn" onclick="logout()">Terminate Session</a>
-        </div>
-    </nav>
+    <!-- App Container -->
+    <div class="app-layout">
+        
+        <!-- Sidebar Backdrop for Mobile -->
+        <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
 
-    <!-- Top Hardware Routing Strip -->
-    <div class="io-panel">
-        <div class="io-group">
-            <label>🎙️ Mic:</label>
-            <select id="mic-select" onchange="syncIO()">
-                <option value="Frontend" selected>📱 Browser/Phone</option>
-                <option value="Backend">💻 Hardware/Laptop</option>
-            </select>
-        </div>
-        <div class="io-separator">|</div>
-        <div class="io-group">
-            <label>🔊 Speaker:</label>
-            <select id="speaker-select" onchange="syncIO()">
-                <option value="Frontend" selected>📱 Browser/Phone</option>
-                <option value="Backend">💻 Hardware/Laptop</option>
-            </select>
-        </div>
-        <div class="io-separator">|</div>
-        <div class="io-group">
-            <label>🗂️ Sector:</label>
-            <select id="workspace-select" onchange="changeWorkspaceSelect(this.value)">
-                <option value="general" selected>General</option>
-            </select>
-        </div>
-    </div>
-
-    <!-- MAIN DASHBOARD SECTION -->
-    <div id="dashboard-section" class="page-section">
-        <!-- Neural Orb & Interaction State -->
-        <div class="orb-zone">
-            <div id="eva-orb" onclick="toggleListening()" title="Click to talk to AKRA">
-                <div class="orb-core"></div>
-                <div class="orb-ring ring-1"></div>
-                <div class="orb-ring ring-2"></div>
-            </div>
-            <div id="status" class="status-indicator">Click the orb or type a command to initialize link</div>
-            <div id="voice-transcript" class="voice-transcript-banner" style="display: none;"></div>
-        </div>
-
-        <!-- Dynamic Quick Action Chips -->
-        <div class="quick-chips-container">
-            <button class="chip" onclick="quickPrompt('What are the latest news in India today?')">📰 Latest News</button>
-            <button class="chip" onclick="quickPrompt('What are the latest movie releases in India?')">🎬 New Movies</button>
-            <button class="chip" onclick="quickPrompt('Create a new project sector')">📁 New Sector</button>
-            <button class="chip" onclick="quickPrompt('create pdf')">📄 Export PDF</button>
-            <button class="chip" onclick="quickPrompt('Who created you and tell me about him?')">👤 Creator Info</button>
-        </div>
-
-        <!-- Live Cyber Chat Feed Container -->
-        <div class="chat-feed-wrapper">
-            <div class="chat-feed-header">
-                <div class="chat-feed-title">
-                    <span class="pulse-indicator"></span>
-                    <span>ACTIVE NEURAL STREAM</span>
-                </div>
-                <div class="chat-feed-actions">
-                    <button class="small-action-btn" onclick="clearLiveChatFeed()" title="Clear screen">🧹 Clear Stream</button>
-                    <button class="small-action-btn" onclick="exportCurrentChat()" title="Download chat history">📥 Export</button>
-                </div>
-            </div>
-            
-            <div id="chat-feed" class="chat-feed-container">
-                <!-- Welcome Bot Message -->
-                <div class="chat-message akra-message">
-                    <div class="msg-avatar">AKRA</div>
-                    <div class="msg-content-wrapper">
-                        <div class="msg-meta">
-                            <span class="msg-sender">AKRA Core</span>
-                            <span class="msg-time" id="welcome-time">System Ready</span>
-                        </div>
-                        <div class="msg-body">
-                            Greetings, Operator. Neural link established and encrypted. Systems nominal. How may I assist your mission today?
-                        </div>
+        <!-- Sleek Collapsible Sidebar -->
+        <aside class="app-sidebar" id="app-sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <img src="akra.png" alt="AKRA Logo" class="brand-logo">
+                    <div class="brand-text">
+                        <div class="brand-name">AKRA <span class="brand-version">2.0</span></div>
+                        <div class="brand-sub">AI Assistant</div>
                     </div>
                 </div>
+                <button class="close-sidebar-btn" onclick="toggleSidebar(false)" aria-label="Close Sidebar">✕</button>
             </div>
-        </div>
 
-        <!-- Image Attachment Preview -->
-        <div id="image-preview-container" class="preview-card" style="display: none;">
-            <div class="preview-header">
-                <span>📎 Attachment Ready for Visual Analysis</span>
-                <button onclick="clearAttachment()" class="clear-preview-btn">✕</button>
-            </div>
-            <img id="image-preview" src="" alt="Attached Screenshot">
-        </div>
-
-        <!-- Futuristic Command Input Bar -->
-        <div class="command-bar-container">
-            <button onclick="uploadImage()" class="icon-tool-btn" title="Attach image or screenshot for visual scan">
-                📷 <span>Attach</span>
-            </button>
-            <input type="text" id="userPrompt" placeholder="Transmit command or query (e.g. 'search for...', 'note this...', 'create project...')" autocomplete="off">
-            <button onclick="sendTextPrompt()" class="send-command-btn">
-                <span>Send</span> ⚡
-            </button>
-        </div>
-
-        <!-- Voice & Mood Control Bar -->
-        <div class="controls-bar">
-            <button onclick="stopSpeaking()" class="stop-speaking-btn">⏹️ Stop Speaking</button>
-            <div class="mood-selector-container">
-                <label>Persona:</label>
-                <select id="mood-select" onchange="changeEVAMood()">
-                    <option value="Professional" selected>Professional (Sharp & Grounded)</option>
-                    <option value="Friendly">Friendly (Brother-in-Arms)</option>
-                    <option value="JARVIS">J.A.R.V.I.S. (Tactical AI)</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <!-- ADMIN CONSOLE SECTION (Accessible only to Admin accounts) -->
-    <div id="admin-section" class="page-section" style="display: none;">
-        <div class="section-header-box">
-            <h2 class="section-title">⚡ AKRA CENTRAL ADMIN MATRIX</h2>
-            <p class="section-subtitle">Operator Access Management, Sector Controls & System Moderation</p>
-        </div>
-
-        <!-- Stats Overview Cards -->
-        <div class="admin-stats-grid">
-            <div class="stat-card">
-                <div class="stat-label">TOTAL OPERATORS</div>
-                <div class="stat-value" id="stat-total-users">0</div>
-                <div class="stat-icon">👥</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">ACTIVE SESSIONS</div>
-                <div class="stat-value text-cyan" id="stat-active-users">0</div>
-                <div class="stat-icon">🟢</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">BANNED OPERATORS</div>
-                <div class="stat-value text-red" id="stat-banned-users">0</div>
-                <div class="stat-icon">🚫</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">TOTAL LOGS & CHATS</div>
-                <div class="stat-value text-gold" id="stat-total-chats">0</div>
-                <div class="stat-icon">📊</div>
-            </div>
-        </div>
-
-        <!-- User Registry Management Table -->
-        <div class="admin-table-wrapper">
-            <div class="table-header-tools">
-                <h3>OPERATOR REGISTRY DIRECTORY</h3>
-                <div class="table-search-box">
-                    <input type="text" id="admin-search-user" placeholder="Filter by operator username..." oninput="filterAdminUsers()">
-                    <button onclick="loadAdminPanel()" class="refresh-btn">🔄 Refresh Matrix</button>
+            <!-- User Status Card -->
+            <div class="user-profile-card">
+                <div class="user-avatar" id="sidebar-avatar">OP</div>
+                <div class="user-details">
+                    <div class="user-name-row">
+                        <span class="user-display-name" id="nav-username">Connecting...</span>
+                        <span class="role-pill" id="nav-user-role">OPERATOR</span>
+                    </div>
+                    <div class="user-status-text"><span class="status-dot"></span> Neural Link Active</div>
                 </div>
             </div>
 
-            <div class="responsive-table-scroll">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>OPERATOR ID</th>
-                            <th>ACCESS ROLE</th>
-                            <th>STATUS</th>
-                            <th>REGISTERED</th>
-                            <th>LAST ACTIVE</th>
-                            <th>CHATS</th>
-                            <th>MODERATION ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="admin-users-tbody">
-                        <tr>
-                            <td colspan="7" class="loading-cell">Scanning operator matrix...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Navigation Links -->
+            <nav class="sidebar-nav">
+                <div class="nav-group-title">MAIN MENU</div>
+                <button class="nav-item active" id="nav-dashboard" onclick="navigateTo('dashboard')">
+                    <span class="nav-icon">💬</span>
+                    <span class="nav-label">Chat Console</span>
+                </button>
+                <button class="nav-item" id="nav-history" onclick="navigateTo('history')">
+                    <span class="nav-icon">📜</span>
+                    <span class="nav-label">Mission Logs</span>
+                </button>
+                <button class="nav-item" id="nav-notes" onclick="navigateTo('notes')">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-label">Knowledge Bank</span>
+                </button>
+                <button class="nav-item admin-nav-item" id="admin-nav-link" style="display: none;" onclick="navigateTo('admin')">
+                    <span class="nav-icon">⚡</span>
+                    <span class="nav-label">Admin Console</span>
+                </button>
+            </nav>
+
+            <!-- Quick Settings in Sidebar -->
+            <div class="sidebar-settings">
+                <div class="nav-group-title">SETTINGS & ROUTING</div>
+                
+                <div class="setting-row">
+                    <label>🗂️ Active Sector</label>
+                    <select id="workspace-select" onchange="changeWorkspaceSelect(this.value)">
+                        <option value="general" selected>General</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label>🎭 Persona</label>
+                    <select id="mood-select" onchange="changeEVAMood()">
+                        <option value="Professional" selected>Professional</option>
+                        <option value="Friendly">Friendly</option>
+                        <option value="JARVIS">J.A.R.V.I.S.</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label>🎙️ Microphone</label>
+                    <select id="mic-select" onchange="syncIO()">
+                        <option value="Frontend" selected>📱 Phone / Browser</option>
+                        <option value="Backend">💻 Laptop Hardware</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label>🔊 Speaker</label>
+                    <select id="speaker-select" onchange="syncIO()">
+                        <option value="Frontend" selected>📱 Phone / Browser</option>
+                        <option value="Backend">💻 Laptop Hardware</option>
+                    </select>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- MISSION LOGS & HISTORY SECTION -->
-    <div id="history-section" class="page-section" style="display: none;">
-        <div class="section-header-box">
-            <h2 class="section-title">📜 MISSION LOGS & ARCHIVE</h2>
-            <p class="section-subtitle">Chronological record of commands, neural responses, and code blocks</p>
-        </div>
-
-        <div class="logs-toolbar">
-            <input type="text" id="history-search-input" placeholder="Search mission records by keyword..." oninput="filterHistoryLogs()">
-            <div class="toolbar-btns">
-                <button onclick="loadHistory()" class="refresh-btn">🔄 Refresh</button>
-                <button onclick="exportCurrentChat()" class="export-btn">📥 Export JSON/Text</button>
-                <button onclick="clearAllHistory()" class="clear-btn">🗑️ Clear All Logs</button>
+            <!-- Logout -->
+            <div class="sidebar-footer">
+                <button class="logout-btn" onclick="logout()">
+                    <span>🚪</span> Terminate Session
+                </button>
             </div>
-        </div>
+        </aside>
 
-        <div id="history-list" class="log-container">
-            <p class="loading">Retrieving mission logs from sector storage...</p>
-        </div>
+        <!-- Main App Screen Area -->
+        <main class="app-main">
+            <!-- Top App Bar -->
+            <header class="app-topbar">
+                <div class="topbar-left">
+                    <button class="hamburger-btn" onclick="toggleSidebar(true)" aria-label="Open Menu">
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                        <span class="bar"></span>
+                    </button>
+                    <div class="topbar-title-group">
+                        <h1 class="topbar-title" id="page-title">Chat Console</h1>
+                        <span class="sector-badge" id="topbar-sector-badge">Sector: General</span>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="live-status-pill" id="system-status-indicator">
+                        <span class="status-dot"></span>
+                        <span id="status-text">Ready</span>
+                    </div>
+                    <button class="topbar-action-btn" onclick="stopSpeaking()" title="Stop voice output">
+                        ⏹️ <span class="hide-mobile">Silence</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- VIEW 1: CHAT DASHBOARD -->
+            <section id="dashboard-section" class="view-section active">
+                <div class="chat-container">
+                    <!-- Chat Message Stream -->
+                    <div id="chat-feed" class="chat-messages-area">
+                        <!-- Welcome Hero Box -->
+                        <div class="welcome-hero" id="welcome-hero">
+                            <div class="hero-icon-wrap">
+                                <img src="akra.png" alt="AKRA" class="hero-logo">
+                            </div>
+                            <h2>How can I assist you today?</h2>
+                            <p>Ask anything, attach code/screenshots, or give a voice command.</p>
+                            
+                            <div class="prompt-chips-grid">
+                                <button class="prompt-chip" onclick="quickPrompt('What are the latest news updates in India today?')">
+                                    <span class="chip-icon">📰</span>
+                                    <span class="chip-text">Latest News in India</span>
+                                </button>
+                                <button class="prompt-chip" onclick="quickPrompt('What are the latest movie releases in India?')">
+                                    <span class="chip-icon">🎬</span>
+                                    <span class="chip-text">New Movie Releases</span>
+                                </button>
+                                <button class="prompt-chip" onclick="quickPrompt('Create a new project sector')">
+                                    <span class="chip-icon">📁</span>
+                                    <span class="chip-text">Create Project Sector</span>
+                                </button>
+                                <button class="prompt-chip" onclick="quickPrompt('create pdf')">
+                                    <span class="chip-icon">📄</span>
+                                    <span class="chip-text">Export Mission PDF</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Listening Banner Overlay -->
+                    <div id="voice-overlay" class="voice-listening-overlay" style="display: none;">
+                        <div class="voice-wave-animation">
+                            <span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                        <div class="voice-text-preview" id="voice-transcript">Listening... Speak now</div>
+                        <button class="voice-cancel-btn" onclick="toggleListening()">Stop Listening</button>
+                    </div>
+
+                    <!-- Attachment Preview Container -->
+                    <div id="image-preview-container" class="attachment-preview-box" style="display: none;">
+                        <img id="image-preview" src="" alt="Attached Screenshot">
+                        <div class="attachment-info">
+                            <span>Visual scan attached</span>
+                            <button onclick="clearAttachment()" class="remove-attachment-btn">✕ Remove</button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Fixed Input Bar -->
+                    <div class="chat-input-bar">
+                        <button class="input-tool-btn" onclick="uploadImage()" title="Attach Image or Screenshot">
+                            📎
+                        </button>
+                        
+                        <div class="input-field-wrap">
+                            <textarea id="userPrompt" placeholder="Message AKRA (Enter to send, Shift+Enter for new line)..." rows="1"></textarea>
+                        </div>
+
+                        <button class="mic-toggle-btn" id="mic-btn" onclick="toggleListening()" title="Voice Input">
+                            🎙️
+                        </button>
+
+                        <button class="send-message-btn" id="send-btn" onclick="sendTextPrompt()" title="Send Message">
+                            ➤
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: MISSION LOGS -->
+            <section id="history-section" class="view-section" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>📜 Mission Logs & Archive</h2>
+                            <p class="panel-subtitle">History of previous conversation turns and generated codes</p>
+                        </div>
+                        <div class="panel-actions">
+                            <button class="btn btn-secondary" onclick="loadHistory()">🔄 Refresh</button>
+                            <button class="btn btn-secondary" onclick="exportCurrentChat()">📥 Export Log</button>
+                            <button class="btn btn-danger" onclick="clearAllHistory()">🗑️ Wipe Logs</button>
+                        </div>
+                    </div>
+
+                    <div class="filter-bar">
+                        <input type="text" id="history-search-input" placeholder="Search mission history by keyword..." oninput="filterHistoryLogs()">
+                    </div>
+
+                    <div id="history-list" class="history-cards-container">
+                        <div class="empty-state">Loading mission logs...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 3: PERMANENT NOTES -->
+            <section id="notes-section" class="view-section" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>📚 Permanent Knowledge Bank</h2>
+                            <p class="panel-subtitle">Persistent memories and rules injected into AKRA's cognitive core</p>
+                        </div>
+                        <button class="btn btn-secondary" onclick="loadNotes()">🔄 Refresh</button>
+                    </div>
+
+                    <!-- Add Note Input -->
+                    <div class="add-note-box">
+                        <input type="text" id="new-note-input" placeholder="Enter key facts, bio info, preferences, or rules to permanently remember...">
+                        <button class="btn btn-primary" onclick="submitNewNote()">💾 Save to Memory</button>
+                    </div>
+
+                    <div id="notes-list" class="notes-cards-container">
+                        <div class="empty-state">Loading knowledge bank...</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 4: ADMIN CONSOLE -->
+            <section id="admin-section" class="view-section" style="display: none;">
+                <div class="content-panel">
+                    <div class="panel-header">
+                        <div>
+                            <h2>⚡ Admin Command Matrix</h2>
+                            <p class="panel-subtitle">Operator Access Management & System Moderation</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="loadAdminPanel()">🔄 Refresh Matrix</button>
+                    </div>
+
+                    <!-- Admin Metric Cards -->
+                    <div class="stats-row">
+                        <div class="metric-card">
+                            <div class="metric-num" id="stat-total-users">0</div>
+                            <div class="metric-label">Total Operators</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-num text-success" id="stat-active-users">0</div>
+                            <div class="metric-label">Active Sessions</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-num text-danger" id="stat-banned-users">0</div>
+                            <div class="metric-label">Banned Operators</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-num text-primary" id="stat-total-chats">0</div>
+                            <div class="metric-label">Recorded Chats</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter & User Table -->
+                    <div class="filter-bar">
+                        <input type="text" id="admin-search-user" placeholder="Filter operators by username..." oninput="filterAdminUsers()">
+                    </div>
+
+                    <div class="table-container">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>OPERATOR</th>
+                                    <th>ROLE</th>
+                                    <th>STATUS</th>
+                                    <th>REGISTERED</th>
+                                    <th>LAST ACTIVE</th>
+                                    <th>CHATS</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody">
+                                <tr><td colspan="7" class="empty-state">Scanning operator matrix...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- PERMANENT NOTES SECTION -->
-    <div id="notes-section" class="page-section" style="display: none;">
-        <div class="section-header-box">
-            <h2 class="section-title">📚 PERMANENT KNOWLEDGE BANK</h2>
-            <p class="section-subtitle">Long-term persistent context injected into AKRA's cognitive core</p>
-        </div>
-
-        <!-- Add New Permanent Note Form -->
-        <div class="add-note-card">
-            <h3>Add Permanent Rule / Memory</h3>
-            <div class="note-input-row">
-                <input type="text" id="new-note-input" placeholder="Enter key facts, bio info, preferences, or rules to permanently remember...">
-                <button onclick="submitNewNote()" class="send-btn">💾 Commit to Memory</button>
-            </div>
-        </div>
-
-        <div id="notes-list" class="log-container">
-            <p class="loading">Loading permanent memories...</p>
-        </div>
-        <button onclick="loadNotes()" class="refresh-btn">🔄 Sync Knowledge Bank</button>
-    </div>
-
-    <!-- Security Protocol Disclaimer -->
-    <div id="safety-disclaimer">
-        ⚡ <span style="color: #00d2ff;">SECURE NEURAL PROTOCOL:</span> AKRA is an AI Assistant. Verify critical calculations and system commands.
-    </div>
+    <!-- Toast Notification -->
+    <div id="akra-toast" class="toast-popup"></div>
 
     <script src="script.js"></script>
 </body>
-
 </html>

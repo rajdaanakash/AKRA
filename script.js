@@ -1,4 +1,4 @@
-// AKRA Core Interactive System Controller
+// AKRA AI Assistant - Clean & Intuitive Frontend Controller
 let currentUser = null;
 let currentRole = "operator";
 let isAdmin = false;
@@ -26,20 +26,21 @@ async function checkAuth() {
         currentRole = data.role || "operator";
         isAdmin = !!data.is_admin;
 
-        // Update UI Operator Profile Badge
+        // Update Operator Profile Display in Sidebar
         const userDisplay = document.getElementById('nav-username');
         const roleDisplay = document.getElementById('nav-user-role');
+        const avatarDisplay = document.getElementById('sidebar-avatar');
         const adminLink = document.getElementById('admin-nav-link');
 
         if (userDisplay) userDisplay.innerText = currentUser;
+        if (avatarDisplay) avatarDisplay.innerText = currentUser.substring(0, 2).toUpperCase();
         if (roleDisplay) {
             roleDisplay.innerText = currentRole.toUpperCase();
-            roleDisplay.className = isAdmin ? "user-role-badge admin-badge" : "user-role-badge";
+            roleDisplay.className = isAdmin ? "role-pill admin-badge" : "role-pill";
         }
 
-        // Show Admin link only if admin
         if (adminLink) {
-            adminLink.style.display = isAdmin ? "inline-block" : "none";
+            adminLink.style.display = isAdmin ? "flex" : "none";
         }
 
         return true;
@@ -55,30 +56,74 @@ window.onload = async () => {
     if (authenticated) {
         fetchDirectories();
         loadRecentChatFeed();
-        setupInputListeners();
-        updateTimeDisplays();
+        setupInputHandlers();
     }
 };
 
-function updateTimeDisplays() {
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const welcomeTime = document.getElementById('welcome-time');
-    if (welcomeTime) welcomeTime.innerText = timeStr;
-}
+// --- SIDEBAR & VIEW NAVIGATION ---
 
-function setupInputListeners() {
-    const input = document.getElementById('userPrompt');
-    if (input) {
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                sendTextPrompt();
-            }
-        });
+function toggleSidebar(open) {
+    const sidebar = document.getElementById('app-sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar || !backdrop) return;
+
+    if (open) {
+        sidebar.classList.add('open');
+        backdrop.classList.add('open');
+    } else {
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('open');
     }
 }
 
-// --- WORKSPACE & DIRECTORY MANAGEMENT ---
+function navigateTo(sectionId) {
+    toggleSidebar(false); // Close mobile drawer on navigation
+
+    const sections = ['dashboard', 'history', 'notes', 'admin'];
+    const titles = {
+        'dashboard': 'Chat Console',
+        'history': 'Mission Logs',
+        'notes': 'Knowledge Bank',
+        'admin': 'Admin Command Matrix'
+    };
+
+    sections.forEach(id => {
+        const el = document.getElementById(id + '-section');
+        const navEl = document.getElementById('nav-' + id);
+        if (el) el.style.display = 'none';
+        if (navEl) navEl.classList.remove('active');
+    });
+
+    const target = document.getElementById(sectionId + '-section');
+    const targetNav = document.getElementById('nav-' + sectionId) || document.getElementById('admin-nav-link');
+    const pageTitle = document.getElementById('page-title');
+
+    if (target) target.style.display = (sectionId === 'dashboard') ? 'flex' : 'block';
+    if (targetNav) targetNav.classList.add('active');
+    if (pageTitle) pageTitle.innerText = titles[sectionId] || 'AKRA Assistant';
+
+    if (sectionId === 'history') loadHistory();
+    if (sectionId === 'notes') loadNotes();
+    if (sectionId === 'admin') {
+        if (!isAdmin) {
+            alert("ACCESS DENIED: Restricted to Administrators.");
+            navigateTo('dashboard');
+            return;
+        }
+        loadAdminPanel();
+    }
+}
+
+function setSystemStatus(text, isBusy = false) {
+    const statusText = document.getElementById('status-text');
+    const indicator = document.getElementById('system-status-indicator');
+    if (statusText) statusText.innerText = text;
+    if (indicator) {
+        indicator.style.borderColor = isBusy ? "var(--warning)" : "var(--border-subtle)";
+    }
+}
+
+// --- WORKSPACE DIRECTORIES ---
 
 async function fetchDirectories() {
     try {
@@ -97,6 +142,8 @@ async function fetchDirectories() {
             if (dir === active_mission) opt.selected = true;
             select.appendChild(opt);
         });
+
+        updateSectorBadge(active_mission);
     } catch (err) {
         console.error("Failed to load directories:", err);
     }
@@ -104,127 +151,112 @@ async function fetchDirectories() {
 
 async function changeWorkspaceSelect(dirName) {
     active_mission = dirName;
+    updateSectorBadge(dirName);
     try {
-        const res = await fetch('/switch-workspace', {
+        await fetch('/switch-workspace', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ directory: dirName })
         });
-        const data = await res.json();
-        showNotification(`Workspace sector switched to: ${dirName.toUpperCase()}`);
+        showToast(`Sector switched to: ${dirName.toUpperCase()}`);
     } catch (e) {
         console.error("Error switching workspace:", e);
     }
 }
 
-// --- NAVIGATION MATRIX ---
-
-function showSection(sectionId) {
-    const sections = ['dashboard', 'history', 'notes', 'admin'];
-    sections.forEach(id => {
-        const el = document.getElementById(id + '-section');
-        const navEl = document.getElementById('nav-' + id);
-        if (el) el.style.display = 'none';
-        if (navEl) navEl.classList.remove('active');
-    });
-
-    const target = document.getElementById(sectionId + '-section');
-    const targetNav = document.getElementById('nav-' + sectionId) || document.getElementById('admin-nav-link');
-    
-    if (target) {
-        target.style.display = (sectionId === 'dashboard') ? 'flex' : 'block';
+function updateSectorBadge(sectorName) {
+    const badge = document.getElementById('topbar-sector-badge');
+    if (badge) {
+        badge.innerText = `Sector: ${sectorName.toUpperCase()}`;
     }
-    if (targetNav && sectionId !== 'admin') {
-        targetNav.classList.add('active');
-    }
-
-    if (sectionId === 'history') loadHistory();
-    if (sectionId === 'notes') loadNotes();
-    if (sectionId === 'admin') {
-        if (!isAdmin) {
-            alert("ACCESS DENIED: Restricted to System Administrators.");
-            showSection('dashboard');
-            return;
-        }
-        loadAdminPanel();
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// --- MARKDOWN & TEXT FORMATTING HELPER ---
+// --- INPUT & TEXTAREA AUTO-RESIZE ---
+
+function setupInputHandlers() {
+    const textarea = document.getElementById('userPrompt');
+    if (!textarea) return;
+
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendTextPrompt();
+        }
+    });
+
+    textarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+}
+
+// --- MARKDOWN & CODE FORMATTING ---
 
 function formatMarkdown(text) {
     if (!text) return "";
 
-    // 1. Sanitize HTML entities
     let safe = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // 2. Format Code Blocks: ```lang \n code \n ```
+    // Code Blocks: ```lang code ```
     safe = safe.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, function(match, lang, code) {
         const safeCode = code.trim();
         const codeId = "code-" + Math.random().toString(36).substr(2, 9);
         return `
-            <div class="code-block-container">
-                <div class="code-block-header">
-                    <span class="code-lang-tag">${lang || 'CODE'}</span>
-                    <button class="copy-code-btn" onclick="copyCodeBlock('${codeId}')">📋 Copy</button>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>${lang || 'CODE'}</span>
+                    <button class="copy-btn" onclick="copyCode('${codeId}')">📋 Copy</button>
                 </div>
-                <pre class="code-snippet"><code id="${codeId}">${safeCode}</code></pre>
+                <pre><code id="${codeId}">${safeCode}</code></pre>
             </div>
         `;
     });
 
-    // 3. Inline code: `code`
+    // Inline code: `code`
     safe = safe.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
 
-    // 4. Bold: **text** or __text__
+    // Bold: **text**
     safe = safe.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    safe = safe.replace(/__([^_]+)__/g, '<strong>$1</strong>');
 
-    // 5. Italic: *text* or _text_
+    // Italic: *text*
     safe = safe.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    safe = safe.replace(/_([^_]+)_/g, '<em>$1</em>');
 
-    // 6. Markdown Images: ![alt](url)
-    safe = safe.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s\)]+)\)/g, '<div class="chat-img-wrapper"><img src="$2" alt="$1" class="chat-generated-img" onclick="window.open(\'$2\')"></div>');
+    // Images: ![alt](url)
+    safe = safe.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s\)]+)\)/g, '<img src="$2" alt="$1" class="chat-attachment-img" onclick="window.open(\'$2\')">');
 
-    // 7. Markdown Links: [text](url)
+    // Links: [text](url)
     safe = safe.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="chat-link">$1 ↗</a>');
 
-    // 8. Bullet points
+    // Bullet list items
     safe = safe.replace(/^\s*[\*\-]\s+(.+)$/gm, '<li>$1</li>');
-    safe = safe.replace(/(<li>.*<\/li>)/s, '<ul class="chat-bullet-list">$1</ul>');
+    safe = safe.replace(/(<li>.*<\/li>)/s, '<ul class="chat-list">$1</ul>');
 
-    // 9. Line breaks
+    // Line breaks
     safe = safe.replace(/\n/g, '<br>');
-
-    // Clean up empty br tags in lists and code
     safe = safe.replace(/<\/div><br>/g, '</div>');
     safe = safe.replace(/<\/pre><br>/g, '</pre>');
 
     return safe;
 }
 
-function copyCodeBlock(elementId) {
+function copyCode(elementId) {
     const codeEl = document.getElementById(elementId);
     if (codeEl) {
         navigator.clipboard.writeText(codeEl.innerText).then(() => {
-            showNotification("Code copied to clipboard!");
-        }).catch(() => {
-            showNotification("Failed to copy code.");
+            showToast("Code copied to clipboard!");
         });
     }
 }
 
-// --- LIVE CHAT STREAM FEED CONTROLLER ---
+// --- CHAT STREAM FEED CONTROLLER ---
 
-function appendMessageToFeed(sender, text, timestamp = null, imageData = null) {
+function appendMessage(sender, text, timestamp = null, imageData = null) {
     const chatFeed = document.getElementById('chat-feed');
-    if (!chatFeed) return;
+    const hero = document.getElementById('welcome-hero');
+    if (hero) hero.style.display = "none";
 
     const isUser = (sender.toLowerCase() === "user" || sender.toLowerCase() === "operator");
     const timeFormatted = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -236,15 +268,15 @@ function appendMessageToFeed(sender, text, timestamp = null, imageData = null) {
 
     let imageHtml = "";
     if (imageData) {
-        imageHtml = `<div class="chat-attachment-bubble"><img src="${imageData}" alt="Attached Visual Scan"></div>`;
+        imageHtml = `<div><img src="${imageData}" alt="Attached Visual" class="chat-attachment-img"></div>`;
     }
 
     let actionButtons = "";
     if (!isUser) {
         actionButtons = `
-            <div class="msg-footer-actions">
-                <button class="msg-tool-btn" onclick="speakMessage('${msgId}')" title="Read aloud">🔊 Speak</button>
-                <button class="msg-tool-btn" onclick="copyMessageText('${msgId}')" title="Copy response">📄 Copy</button>
+            <div class="msg-actions">
+                <button class="msg-btn" onclick="speakMessage('${msgId}')">🔊 Speak</button>
+                <button class="msg-btn" onclick="copyMessageText('${msgId}')">📄 Copy</button>
             </div>
         `;
     }
@@ -253,47 +285,26 @@ function appendMessageToFeed(sender, text, timestamp = null, imageData = null) {
 
     msgDiv.innerHTML = `
         <div class="msg-avatar">${isUser ? 'OP' : 'AKRA'}</div>
-        <div class="msg-content-wrapper">
-            <div class="msg-meta">
-                <span class="msg-sender">${isUser ? (currentUser || 'Operator') : 'AKRA Core'}</span>
-                <span class="msg-time">${timeFormatted}</span>
+        <div class="msg-content-wrap">
+            <div class="msg-header">
+                <span>${isUser ? (currentUser || 'Operator') : 'AKRA Core'}</span>
+                <span>${timeFormatted}</span>
             </div>
             ${imageHtml}
-            <div class="msg-body" id="${msgId}-content">${formattedContent}</div>
+            <div class="msg-body" id="${msgId}-body">${formattedContent}</div>
             ${actionButtons}
         </div>
     `;
 
     chatFeed.appendChild(msgDiv);
-    scrollChatFeedToBottom();
+    scrollChatBottom();
 }
 
-function scrollChatFeedToBottom() {
+function scrollChatBottom() {
     const chatFeed = document.getElementById('chat-feed');
     if (chatFeed) {
         chatFeed.scrollTop = chatFeed.scrollHeight;
     }
-}
-
-function clearLiveChatFeed() {
-    const chatFeed = document.getElementById('chat-feed');
-    if (chatFeed) {
-        chatFeed.innerHTML = `
-            <div class="chat-message akra-message">
-                <div class="msg-avatar">AKRA</div>
-                <div class="msg-content-wrapper">
-                    <div class="msg-meta">
-                        <span class="msg-sender">AKRA Core</span>
-                        <span class="msg-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                    <div class="msg-body">
-                        Stream purged. Standing by for new commands, Operator.
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    showNotification("Live chat feed cleared.");
 }
 
 async function loadRecentChatFeed() {
@@ -303,14 +314,10 @@ async function loadRecentChatFeed() {
         const history = await response.json();
         
         if (Array.isArray(history) && history.length > 0) {
-            const recentLogs = history.slice(-15);
+            const recentLogs = history.slice(-20);
             recentLogs.forEach(item => {
-                if (item.you) {
-                    appendMessageToFeed("user", item.you, item.timestamp);
-                }
-                if (item.AKRA) {
-                    appendMessageToFeed("akra", item.AKRA, item.timestamp);
-                }
+                if (item.you) appendMessage("user", item.you, item.timestamp);
+                if (item.AKRA) appendMessage("akra", item.AKRA, item.timestamp);
             });
         }
     } catch (err) {
@@ -319,24 +326,23 @@ async function loadRecentChatFeed() {
 }
 
 function speakMessage(msgId) {
-    const contentEl = document.getElementById(msgId + '-content');
-    if (contentEl) {
-        const plainText = contentEl.innerText || contentEl.textContent;
+    const bodyEl = document.getElementById(msgId + '-body');
+    if (bodyEl) {
+        const plainText = bodyEl.innerText || bodyEl.textContent;
         speakOnBrowser(plainText);
     }
 }
 
 function copyMessageText(msgId) {
-    const contentEl = document.getElementById(msgId + '-content');
-    if (contentEl) {
-        const plainText = contentEl.innerText || contentEl.textContent;
-        navigator.clipboard.writeText(plainText).then(() => {
-            showNotification("Response text copied to clipboard.");
+    const bodyEl = document.getElementById(msgId + '-body');
+    if (bodyEl) {
+        navigator.clipboard.writeText(bodyEl.innerText || bodyEl.textContent).then(() => {
+            showToast("Message copied to clipboard.");
         });
     }
 }
 
-// --- SENDING COMMANDS & IMAGE ATTACHMENTS ---
+// --- SENDING PROMPTS & ATTACHMENTS ---
 
 function uploadImage() {
     const fileInput = document.createElement('input');
@@ -350,14 +356,13 @@ function uploadImage() {
         const reader = new FileReader();
         reader.onload = () => {
             attachedImageData = reader.result;
-
             const previewContainer = document.getElementById('image-preview-container');
             const previewImg = document.getElementById('image-preview');
             if (previewImg && previewContainer) {
                 previewImg.src = attachedImageData;
                 previewContainer.style.display = "flex";
             }
-            document.getElementById('status').innerText = "AKRA: Visual data attached. Transmit your query.";
+            showToast("Visual scan attached.");
         };
         reader.readAsDataURL(file);
     };
@@ -368,49 +373,49 @@ function clearAttachment() {
     attachedImageData = null;
     const previewContainer = document.getElementById('image-preview-container');
     if (previewContainer) previewContainer.style.display = "none";
-    document.getElementById('status').innerText = "AKRA: Attachment removed.";
 }
 
-function quickPrompt(promptText) {
-    const inputField = document.getElementById('userPrompt');
-    if (inputField) {
-        inputField.value = promptText;
+function quickPrompt(text) {
+    const input = document.getElementById('userPrompt');
+    if (input) {
+        input.value = text;
         sendTextPrompt();
     }
 }
 
 async function sendTextPrompt() {
-    const inputField = document.getElementById('userPrompt');
-    const userMessage = inputField.value.trim();
-    const status = document.getElementById('status');
+    const input = document.getElementById('userPrompt');
+    const userMessage = input.value.trim();
     const imagePayload = attachedImageData;
 
-    if (!userMessage && !imagePayload) {
-        return;
-    }
+    if (!userMessage && !imagePayload) return;
 
-    appendMessageToFeed("user", userMessage || "[Visual Inspection Request]", null, imagePayload);
-    
-    inputField.value = "";
+    // Display user message in chat
+    appendMessage("user", userMessage || "[Visual Inspection]", null, imagePayload);
+
+    // Reset input
+    input.value = "";
+    input.style.height = 'auto';
     clearAttachment();
 
-    status.innerText = "AKRA: Processing neural query...";
-    
+    setSystemStatus("Processing...", true);
+
+    // Show Typing indicator
     const typingId = "typing-" + Date.now();
     const chatFeed = document.getElementById('chat-feed');
     const typingDiv = document.createElement('div');
-    typingDiv.className = "chat-message akra-message typing-bubble";
+    typingDiv.className = "chat-message akra-message";
     typingDiv.id = typingId;
     typingDiv.innerHTML = `
         <div class="msg-avatar">AKRA</div>
-        <div class="msg-content-wrapper">
-            <div class="typing-indicator">
+        <div class="msg-content-wrap">
+            <div class="typing-dots">
                 <span></span><span></span><span></span>
             </div>
         </div>
     `;
     chatFeed.appendChild(typingDiv);
-    scrollChatFeedToBottom();
+    scrollChatBottom();
 
     try {
         const res = await fetch('/run-eva', {
@@ -438,39 +443,35 @@ async function sendTextPrompt() {
         }
 
         const data = await res.json();
-        handleAKRAResponse(data);
+        let responseText = data.response || "No response.";
+
+        if (responseText.includes("MISSION_PDF_READY:")) {
+            const fileName = responseText.split(":")[1].trim();
+            responseText = `Sir, your Mission Report PDF is ready.\n\n[📄 Download Mission PDF](/download/${fileName})`;
+        }
+
+        appendMessage("akra", responseText);
+        setSystemStatus("Ready", false);
+
+        // Voice output
+        const speakerMode = document.getElementById('speaker-select').value;
+        if (data.audio === "frontend" || speakerMode === "Frontend") {
+            const cleanText = responseText
+                .replace(/```[\s\S]*?```/g, 'Code snippet provided.')
+                .replace(/!\[.*?\]\(.*?\)/g, '')
+                .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+                .replace(/<[^>]*>?/gm, '');
+            speakOnBrowser(cleanText);
+        }
     } catch (err) {
         const tEl = document.getElementById(typingId);
         if (tEl) tEl.remove();
-        status.innerText = "System Error: Neural communication timeout.";
-        appendMessageToFeed("akra", "⚠️ Neural connection lost. Check network or server status.");
+        setSystemStatus("Error", false);
+        appendMessage("akra", "⚠️ Neural connection timeout. Check network status.");
     }
 }
 
-function handleAKRAResponse(data) {
-    let responseText = data.response || "No response received.";
-    const status = document.getElementById('status');
-
-    if (responseText.includes("MISSION_PDF_READY:")) {
-        const fileName = responseText.split(":")[1].trim();
-        responseText = `Sir, your Mission PDF Report has been generated successfully.\n\n[📄 Download Mission PDF](/download/${fileName})`;
-    }
-
-    appendMessageToFeed("akra", responseText);
-    status.innerText = "AKRA: Command executed.";
-
-    const speakerMode = document.getElementById('speaker-select').value;
-    if (data.audio === "frontend" || speakerMode === "Frontend") {
-        const cleanForSpeech = responseText
-            .replace(/```[\s\S]*?```/g, 'Code block generated.')
-            .replace(/!\[.*?\]\(.*?\)/g, 'Image visualized.')
-            .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-            .replace(/<[^>]*>?/gm, '');
-        speakOnBrowser(cleanForSpeech);
-    }
-}
-
-// --- VOICE RECOGNITION (WEB SPEECH API) ---
+// --- VOICE RECOGNITION ---
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 const recognition = SpeechRecognition ? new SpeechRecognition() : null;
@@ -483,37 +484,36 @@ if (recognition) {
 
 let isListening = false;
 
-async function toggleListening() {
-    const orb = document.getElementById('eva-orb');
-    const status = document.getElementById('status');
-    const transcriptBanner = document.getElementById('voice-transcript');
+function toggleListening() {
     const micMode = document.getElementById('mic-select').value;
+    const overlay = document.getElementById('voice-overlay');
+    const transcriptEl = document.getElementById('voice-transcript');
+    const micBtn = document.getElementById('mic-btn');
 
     if (micMode === "Frontend") {
         if (!recognition) {
-            alert("Voice input is not supported in this browser. Please use Chrome, Edge, or text input.");
+            alert("Voice input is not supported in this browser. Please use Chrome/Edge or text input.");
             return;
         }
 
         if (isListening) {
             recognition.stop();
+            stopVoiceState();
             return;
         }
 
         try {
             isListening = true;
-            orb.classList.add('listening');
-            status.innerText = "🔴 Listening... Speak clearly into your mic";
-            if (transcriptBanner) {
-                transcriptBanner.innerText = "Listening...";
-                transcriptBanner.style.display = "block";
-            }
+            if (overlay) overlay.style.display = "flex";
+            if (micBtn) micBtn.classList.add('active');
+            if (transcriptEl) transcriptEl.innerText = "Listening... Speak now";
+            setSystemStatus("Listening...", true);
 
             recognition.start();
 
             recognition.onresult = (event) => {
-                let interim = '';
                 let finalTranscript = '';
+                let interim = '';
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
@@ -523,53 +523,49 @@ async function toggleListening() {
                     }
                 }
 
-                if (transcriptBanner) {
-                    transcriptBanner.innerText = finalTranscript || interim || "Listening...";
-                }
+                if (transcriptEl) transcriptEl.innerText = finalTranscript || interim || "Listening...";
 
                 if (finalTranscript) {
-                    const inputField = document.getElementById('userPrompt');
-                    if (inputField) inputField.value = finalTranscript;
+                    const input = document.getElementById('userPrompt');
+                    if (input) input.value = finalTranscript;
+                    stopVoiceState();
                     sendTextPrompt();
                 }
             };
 
             recognition.onerror = (e) => {
                 console.error("Mic error:", e);
-                status.innerText = "Mic Error: " + (e.error || "Permission Denied");
-                stopListeningState();
+                stopVoiceState();
+                showToast("Mic Error: " + (e.error || "Permission Denied"));
             };
 
             recognition.onend = () => {
-                stopListeningState();
+                stopVoiceState();
             };
 
         } catch (e) {
-            console.error(e);
-            stopListeningState();
+            stopVoiceState();
         }
-
     } else {
-        status.innerText = "AKRA is listening via Laptop hardware mic...";
-        orb.classList.add('listening');
-        try {
-            const res = await fetch('/run-eva', { method: 'POST' });
-            const data = await res.json();
-            handleAKRAResponse(data);
-        } catch (err) {
-            status.innerText = "Error: Hardware mic failed.";
-        } finally {
-            orb.classList.remove('listening');
-        }
+        // Laptop Hardware Mode
+        setSystemStatus("Hardware Mic Listening...", true);
+        fetch('/run-eva', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                appendMessage("akra", data.response);
+                setSystemStatus("Ready", false);
+            })
+            .catch(() => setSystemStatus("Error", false));
     }
 }
 
-function stopListeningState() {
+function stopVoiceState() {
     isListening = false;
-    const orb = document.getElementById('eva-orb');
-    const transcriptBanner = document.getElementById('voice-transcript');
-    if (orb) orb.classList.remove('listening');
-    if (transcriptBanner) transcriptBanner.style.display = "none";
+    const overlay = document.getElementById('voice-overlay');
+    const micBtn = document.getElementById('mic-btn');
+    if (overlay) overlay.style.display = "none";
+    if (micBtn) micBtn.classList.remove('active');
+    setSystemStatus("Ready", false);
 }
 
 function speakOnBrowser(text) {
@@ -593,12 +589,8 @@ function stopSpeaking() {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
     }
-    fetch('/stop-eva', { method: 'POST' })
-        .then(() => {
-            document.getElementById('status').innerText = "AKRA: System Silenced.";
-            showNotification("Voice playback terminated.");
-        })
-        .catch(console.error);
+    fetch('/stop-eva', { method: 'POST' }).catch(console.error);
+    showToast("Voice silenced.");
 }
 
 function changeEVAMood() {
@@ -608,7 +600,7 @@ function changeEVAMood() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ "mood": mood })
     }).then(() => {
-        showNotification(`Persona shifted to ${mood} mode.`);
+        showToast(`Persona set to ${mood}`);
     });
 }
 
@@ -622,15 +614,157 @@ function syncIO() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
     }).then(() => {
-        showNotification("Hardware routing configuration synced.");
+        showToast("Hardware routing updated.");
     });
 }
 
-// --- ADMIN PANEL CONTROLLER ---
+// --- MISSION LOGS & ARCHIVE ---
+
+async function loadHistory() {
+    const container = document.getElementById('history-list');
+    if (container) container.innerHTML = `<div class="empty-state">Loading mission logs...</div>`;
+
+    try {
+        const res = await fetch('/api/chat/history');
+        if (res.status === 401) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        const data = await res.json();
+        allHistoryLogs = Array.isArray(data) ? data : [];
+        renderHistoryLogs(allHistoryLogs);
+    } catch (err) {
+        if (container) container.innerHTML = `<div class="empty-state">Failed to load logs.</div>`;
+    }
+}
+
+function renderHistoryLogs(logs) {
+    const container = document.getElementById('history-list');
+    if (!container) return;
+
+    if (!logs || logs.length === 0) {
+        container.innerHTML = `<div class="empty-state">No mission records in this sector.</div>`;
+        return;
+    }
+
+    const reversed = [...logs].reverse();
+    container.innerHTML = reversed.map(item => `
+        <div class="history-card">
+            <div class="card-meta">
+                <span>⏱️ ${item.timestamp || 'N/A'}</span>
+                <span class="card-sector">Sector: ${(item.mission || 'General').toUpperCase()}</span>
+            </div>
+            <div class="card-turn user-turn">
+                <strong>You:</strong> ${formatMarkdown(item.you || '')}
+            </div>
+            <div class="card-turn bot-turn">
+                <strong>AKRA:</strong> ${formatMarkdown(item.AKRA || '')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function filterHistoryLogs() {
+    const query = (document.getElementById('history-search-input').value || '').toLowerCase().trim();
+    if (!query) {
+        renderHistoryLogs(allHistoryLogs);
+        return;
+    }
+    const filtered = allHistoryLogs.filter(item => 
+        (item.you && item.you.toLowerCase().includes(query)) ||
+        (item.AKRA && item.AKRA.toLowerCase().includes(query)) ||
+        (item.mission && item.mission.toLowerCase().includes(query))
+    );
+    renderHistoryLogs(filtered);
+}
+
+async function clearAllHistory() {
+    if (!confirm("Are you sure you want to purge all mission logs?")) return;
+
+    try {
+        const res = await fetch('/api/chat/clear', { method: 'DELETE' });
+        if (res.ok) {
+            allHistoryLogs = [];
+            renderHistoryLogs([]);
+            showToast("Mission logs cleared.");
+        }
+    } catch (e) {
+        showToast("Error wiping logs.");
+    }
+}
+
+async function exportCurrentChat() {
+    try {
+        const res = await fetch('/api/chat/export');
+        const data = await res.json();
+        if (data.status === 'success') {
+            const blob = new Blob([data.transcript], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `AKRA_Logs_${currentUser || 'Operator'}_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast("Mission log downloaded.");
+        }
+    } catch (e) {
+        showToast("Export failed.");
+    }
+}
+
+// --- PERMANENT KNOWLEDGE BANK ---
+
+async function loadNotes() {
+    const container = document.getElementById('notes-list');
+    if (container) container.innerHTML = `<div class="empty-state">Loading knowledge bank...</div>`;
+
+    try {
+        const res = await fetch('/akra_notes.json');
+        const data = await res.json();
+        
+        if (Array.isArray(data) && data.length > 0) {
+            container.innerHTML = data.map(n => `
+                <div class="note-card">
+                    <div class="card-meta">
+                        <span>📌 Memory Timestamp: ${n.timestamp}</span>
+                    </div>
+                    <div>${formatMarkdown(n.content)}</div>
+                </div>
+            `).join('');
+        } else {
+            container.innerHTML = `<div class="empty-state">No permanent memories stored yet.</div>`;
+        }
+    } catch (err) {
+        if (container) container.innerHTML = `<div class="empty-state">Knowledge bank empty.</div>`;
+    }
+}
+
+async function submitNewNote() {
+    const input = document.getElementById('new-note-input');
+    const content = input.value.trim();
+    if (!content) return;
+
+    try {
+        await fetch('/run-eva', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ "transcript": `note this ${content}` })
+        });
+        input.value = "";
+        showToast("Memory committed to Knowledge Bank.");
+        loadNotes();
+    } catch (e) {
+        showToast("Error saving note.");
+    }
+}
+
+// --- ADMIN PANEL ---
 
 async function loadAdminPanel() {
     const tbody = document.getElementById('admin-users-tbody');
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="loading-cell">Scanning operator matrix...</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Scanning operator matrix...</td></tr>`;
 
     try {
         const statsRes = await fetch('/api/admin/stats');
@@ -644,7 +778,7 @@ async function loadAdminPanel() {
 
         const usersRes = await fetch('/api/admin/users');
         if (!usersRes.ok) {
-            tbody.innerHTML = `<tr><td colspan="7" class="error-cell">Admin Clearance Required.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Admin Clearance Required.</td></tr>`;
             return;
         }
 
@@ -652,8 +786,7 @@ async function loadAdminPanel() {
         allAdminUsers = data.users || [];
         renderAdminUsersTable(allAdminUsers);
     } catch (err) {
-        console.error("Admin Load Error:", err);
-        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="error-cell">System Error loading admin matrix.</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Error loading operator matrix.</td></tr>`;
     }
 }
 
@@ -662,7 +795,7 @@ function renderAdminUsersTable(users) {
     if (!tbody) return;
 
     if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="empty-cell">No operators registered in sector.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No operators registered.</td></tr>`;
         return;
     }
 
@@ -673,40 +806,40 @@ function renderAdminUsersTable(users) {
         const isRoot = !!user.is_immutable;
 
         const statusBadge = isBanned 
-            ? `<span class="badge badge-banned">🚫 BANNED</span>` 
-            : `<span class="badge badge-active">🟢 ACTIVE</span>`;
+            ? `<span class="table-badge badge-banned">Banned</span>` 
+            : `<span class="table-badge badge-active">Active</span>`;
 
         const roleBadge = isUserAdmin 
-            ? `<span class="badge badge-admin">⚡ ADMIN</span>` 
-            : `<span class="badge badge-operator">OPERATOR</span>`;
+            ? `<span class="table-badge badge-admin">Admin</span>` 
+            : `<span class="table-badge badge-operator">Operator</span>`;
 
         let actionButtons = "";
         if (isRoot) {
-            actionButtons = `<span class="tag-immutable">🔒 SYSTEM ROOT</span>`;
+            actionButtons = `<span style="color: var(--warning); font-size: 0.75rem; font-weight: 600;">🔒 System Root</span>`;
         } else if (isSelf) {
-            actionButtons = `<span class="tag-self">CURRENT SESSION</span>`;
+            actionButtons = `<span style="color: var(--primary); font-size: 0.75rem;">Current Session</span>`;
         } else {
             const banBtn = isBanned
-                ? `<button class="admin-action-btn btn-unban" onclick="adminUnbanUser('${user.username}')">🔓 Unban</button>`
-                : `<button class="admin-action-btn btn-ban" onclick="adminBanUser('${user.username}')">🚫 Ban</button>`;
+                ? `<button class="tbl-btn tbl-btn-unban" onclick="adminUnbanUser('${user.username}')">Unban</button>`
+                : `<button class="tbl-btn tbl-btn-ban" onclick="adminBanUser('${user.username}')">Ban</button>`;
 
             const roleBtn = isUserAdmin
-                ? `<button class="admin-action-btn btn-demote" onclick="adminChangeRole('${user.username}', 'operator')">Demote</button>`
-                : `<button class="admin-action-btn btn-promote" onclick="adminChangeRole('${user.username}', 'admin')">Promote</button>`;
+                ? `<button class="tbl-btn tbl-btn-role" onclick="adminChangeRole('${user.username}', 'operator')">Demote</button>`
+                : `<button class="tbl-btn tbl-btn-role" onclick="adminChangeRole('${user.username}', 'admin')">Promote</button>`;
 
-            const deleteBtn = `<button class="admin-action-btn btn-delete" onclick="adminDeleteUser('${user.username}')">🗑️ Delete</button>`;
+            const delBtn = `<button class="tbl-btn tbl-btn-del" onclick="adminDeleteUser('${user.username}')">Delete</button>`;
 
-            actionButtons = `<div class="action-btn-group">${banBtn} ${roleBtn} ${deleteBtn}</div>`;
+            actionButtons = `<div class="table-actions">${banBtn} ${roleBtn} ${delBtn}</div>`;
         }
 
         return `
-            <tr class="${isBanned ? 'row-banned' : ''}">
-                <td class="operator-id-cell"><strong>${user.username}</strong></td>
+            <tr>
+                <td><strong>${user.username}</strong></td>
                 <td>${roleBadge}</td>
                 <td>${statusBadge}</td>
-                <td class="time-cell">${user.created_at || 'N/A'}</td>
-                <td class="time-cell">${user.last_login || 'Never'}</td>
-                <td class="numeric-cell">${user.chat_count || 0}</td>
+                <td>${user.created_at || 'N/A'}</td>
+                <td>${user.last_login || 'Never'}</td>
+                <td>${user.chat_count || 0}</td>
                 <td>${actionButtons}</td>
             </tr>
         `;
@@ -727,23 +860,19 @@ function filterAdminUsers() {
 }
 
 async function adminBanUser(username) {
-    if (!confirm(`Are you sure you want to BAN operator '${username}'? They will be immediately blocked from the system.`)) return;
-
+    if (!confirm(`Ban operator '${username}'?`)) return;
     try {
         const res = await fetch('/api/admin/ban', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username })
         });
-        const data = await res.json();
         if (res.ok) {
-            showNotification(`Operator '${username}' has been banned.`);
+            showToast(`Operator '${username}' banned.`);
             loadAdminPanel();
-        } else {
-            alert(data.message || "Action failed.");
         }
     } catch (e) {
-        alert("Server error banning operator.");
+        showToast("Action failed.");
     }
 }
 
@@ -754,36 +883,29 @@ async function adminUnbanUser(username) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username })
         });
-        const data = await res.json();
         if (res.ok) {
-            showNotification(`Operator '${username}' access restored.`);
+            showToast(`Operator '${username}' unbanned.`);
             loadAdminPanel();
-        } else {
-            alert(data.message || "Action failed.");
         }
     } catch (e) {
-        alert("Server error unbanning operator.");
+        showToast("Action failed.");
     }
 }
 
 async function adminDeleteUser(username) {
-    if (!confirm(`⚠️ DANGER: Permanently delete account for '${username}'? This cannot be undone.`)) return;
-
+    if (!confirm(`Permanently delete account for '${username}'?`)) return;
     try {
         const res = await fetch('/api/admin/delete-user', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username })
         });
-        const data = await res.json();
         if (res.ok) {
-            showNotification(`Operator '${username}' account deleted.`);
+            showToast(`Operator '${username}' deleted.`);
             loadAdminPanel();
-        } else {
-            alert(data.message || "Action failed.");
         }
     } catch (e) {
-        alert("Server error deleting operator.");
+        showToast("Action failed.");
     }
 }
 
@@ -794,186 +916,31 @@ async function adminChangeRole(username, newRole) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, role: newRole })
         });
-        const data = await res.json();
         if (res.ok) {
-            showNotification(`Role for '${username}' changed to ${newRole.toUpperCase()}.`);
+            showToast(`Role for '${username}' updated to ${newRole.toUpperCase()}.`);
             loadAdminPanel();
-        } else {
-            alert(data.message || "Action failed.");
         }
     } catch (e) {
-        alert("Server error changing role.");
+        showToast("Action failed.");
     }
 }
 
-// --- MISSION LOGS & ARCHIVE ---
+// --- TOAST NOTIFICATIONS ---
 
-async function loadHistory() {
-    const list = document.getElementById('history-list');
-    if (list) list.innerHTML = `<p class="loading">Loading mission logs...</p>`;
-
-    try {
-        const res = await fetch('/api/chat/history');
-        if (res.status === 401) {
-            window.location.href = "login.html";
-            return;
-        }
-
-        const data = await res.json();
-        allHistoryLogs = Array.isArray(data) ? data : [];
-        renderHistoryLogs(allHistoryLogs);
-    } catch (err) {
-        console.error("History load error:", err);
-        if (list) list.innerHTML = `<p class="error">Failed to load mission logs.</p>`;
-    }
-}
-
-function renderHistoryLogs(logs) {
-    const list = document.getElementById('history-list');
-    if (!list) return;
-
-    if (!logs || logs.length === 0) {
-        list.innerHTML = `<div class="empty-logs">No mission logs recorded in your sector yet.</div>`;
-        return;
-    }
-
-    const reversed = [...logs].reverse();
-    list.innerHTML = reversed.map((item) => `
-        <div class="log-item">
-            <div class="log-header">
-                <span class="log-timestamp">⏱️ ${item.timestamp || 'N/A'}</span>
-                <span class="log-sector">Sector: ${item.mission || 'General'}</span>
-            </div>
-            <div class="log-body">
-                <div class="log-turn user-turn">
-                    <strong>OPERATOR:</strong> ${formatMarkdown(item.you || '')}
-                </div>
-                <div class="log-turn akra-turn">
-                    <strong>AKRA:</strong> ${formatMarkdown(item.AKRA || '')}
-                </div>
-            </div>
-        </div>
-        <hr class="log-divider">
-    `).join('');
-}
-
-function filterHistoryLogs() {
-    const query = (document.getElementById('history-search-input').value || '').toLowerCase().trim();
-    if (!query) {
-        renderHistoryLogs(allHistoryLogs);
-        return;
-    }
-
-    const filtered = allHistoryLogs.filter(item => 
-        (item.you && item.you.toLowerCase().includes(query)) ||
-        (item.AKRA && item.AKRA.toLowerCase().includes(query)) ||
-        (item.mission && item.mission.toLowerCase().includes(query))
-    );
-    renderHistoryLogs(filtered);
-}
-
-async function clearAllHistory() {
-    if (!confirm("Are you sure you want to wipe all mission history logs in your private sector?")) return;
-
-    try {
-        const res = await fetch('/api/chat/clear', { method: 'DELETE' });
-        if (res.ok) {
-            allHistoryLogs = [];
-            renderHistoryLogs([]);
-            clearLiveChatFeed();
-            showNotification("Mission history purged.");
-        }
-    } catch (e) {
-        alert("Failed to clear history.");
-    }
-}
-
-async function exportCurrentChat() {
-    try {
-        const res = await fetch('/api/chat/export');
-        const data = await res.json();
-        if (data.status === 'success') {
-            const blob = new Blob([data.transcript], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `AKRA_Mission_Log_${currentUser || 'Operator'}_${Date.now()}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showNotification("Mission log exported to file.");
-        }
-    } catch (e) {
-        alert("Failed to export chat logs.");
-    }
-}
-
-// --- PERMANENT KNOWLEDGE BANK (NOTES) ---
-
-async function loadNotes() {
-    const list = document.getElementById('notes-list');
-    if (list) list.innerHTML = `<p class="loading">Loading permanent memories...</p>`;
-
-    try {
-        const res = await fetch('/akra_notes.json');
-        const data = await res.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-            list.innerHTML = data.map(n => `
-                <div class="note-item">
-                    <small>📌 ${n.timestamp}</small>
-                    <div class="note-content">${formatMarkdown(n.content)}</div>
-                </div>
-            `).join('');
-        } else {
-            list.innerHTML = `<div class="empty-logs">No permanent notes stored.</div>`;
-        }
-    } catch (err) {
-        if (list) list.innerHTML = `<div class="empty-logs">No permanent knowledge files found.</div>`;
-    }
-}
-
-async function submitNewNote() {
-    const input = document.getElementById('new-note-input');
-    const content = input.value.trim();
-    if (!content) return;
-
-    try {
-        const res = await fetch('/run-eva', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ "transcript": `note this ${content}` })
-        });
-        const data = await res.json();
-        input.value = "";
-        showNotification("Rule committed to Permanent Knowledge Bank.");
-        loadNotes();
-    } catch (e) {
-        alert("Error saving permanent note.");
-    }
-}
-
-// --- NOTIFICATION TOAST HELPER ---
-
-function showNotification(msg) {
-    let toast = document.getElementById('akra-toast');
-    if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'akra-toast';
-        toast.className = 'akra-toast';
-        document.body.appendChild(toast);
-    }
-    toast.innerText = `⚡ ${msg}`;
+function showToast(msg) {
+    const toast = document.getElementById('akra-toast');
+    if (!toast) return;
+    toast.innerText = msg;
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-    }, 3000);
+    }, 2800);
 }
 
-// --- TERMINATE SESSION / LOGOUT ---
+// --- LOGOUT ---
 
 async function logout() {
-    if (confirm("Terminate active neural session and lock operator console?")) {
+    if (confirm("Terminate active session?")) {
         try {
             await fetch('/logout');
             window.location.href = "login.html";

@@ -2,23 +2,27 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AKRA | Authorized Personnel Authentication</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AKRA | Operator Sign In</title>
     <link rel="icon" type="image/png" href="akra.png">
     
-    <!-- Google Fonts -->
+    <!-- Clean Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Orbitron:wght@600;800&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
+            --bg-app: #0a0e17;
+            --bg-card: #131924;
             --primary: #00d2ff;
-            --primary-glow: rgba(0, 210, 255, 0.4);
-            --bg-dark: #05080e;
-            --card-bg: rgba(10, 16, 26, 0.85);
-            --border-color: rgba(0, 210, 255, 0.25);
-            --danger: #ff4b4b;
+            --primary-gradient: linear-gradient(135deg, #00d2ff, #0077b6);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         * {
@@ -28,192 +32,153 @@
         }
 
         body { 
-            background: var(--bg-dark); 
-            color: var(--primary); 
-            font-family: 'Rajdhani', sans-serif; 
+            background: var(--bg-app); 
+            color: var(--text-primary); 
+            font-family: var(--font-main); 
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            min-height: 100vh; 
-            overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.08) 0%, transparent 60%),
-                linear-gradient(rgba(0, 210, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 210, 255, 0.03) 1px, transparent 1px);
-            background-size: 100% 100%, 30px 30px, 30px 30px;
+            min-height: 100dvh; 
+            padding: 16px;
         }
 
         .login-card {
             width: 100%;
-            max-width: 420px;
-            padding: 40px;
-            border: 1px solid var(--border-color);
+            max-width: 380px;
+            padding: 32px 24px;
+            border: 1px solid var(--border-subtle);
             border-radius: 16px;
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px var(--primary-glow);
+            background: var(--bg-card);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
             text-align: center;
-            position: relative;
-            animation: fadeIn 0.8s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .logo-badge {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 15px auto;
-            border-radius: 50%;
-            background: radial-gradient(circle, #00d2ff, #004e92);
+        .logo-wrap {
+            width: 52px;
+            height: 52px;
+            margin: 0 auto 16px auto;
+            border-radius: 12px;
+            background: rgba(0, 210, 255, 0.1);
+            border: 1px solid rgba(0, 210, 255, 0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 0 25px var(--primary-glow);
         }
 
-        .logo-badge img {
-            width: 45px;
-            height: 45px;
+        .logo-wrap img {
+            width: 36px;
+            height: 36px;
             object-fit: contain;
-            border-radius: 50%;
         }
 
         h2 { 
-            font-family: 'Orbitron', monospace;
-            letter-spacing: 3px; 
-            margin-bottom: 8px;
-            font-size: 1.5rem;
+            font-size: 1.35rem;
+            font-weight: 700;
             color: #fff;
-            text-shadow: 0 0 10px var(--primary-glow);
+            margin-bottom: 4px;
         }
 
         .subtitle {
             font-size: 0.85rem;
-            color: #8fa3b7;
-            margin-bottom: 25px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 22px;
         }
 
         .input-group { 
-            margin-bottom: 18px; 
+            margin-bottom: 16px; 
             text-align: left; 
         }
 
         label { 
-            font-family: 'Fira Code', monospace;
-            font-size: 0.75rem; 
+            font-size: 0.78rem; 
             display: block; 
             margin-bottom: 6px; 
-            color: #00d2ff;
-            opacity: 0.9; 
-            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         input {
             width: 100%;
-            padding: 14px 16px;
-            background: rgba(4, 8, 14, 0.75);
-            border: 1px solid var(--border-color);
+            padding: 12px 14px;
+            background: #090d15;
+            border: 1px solid var(--border-subtle);
             border-radius: 8px;
             color: #fff;
-            font-family: 'Fira Code', monospace;
+            font-family: var(--font-main);
             font-size: 0.95rem;
             outline: none;
-            transition: all 0.3s;
+            transition: border-color 0.2s;
         }
 
         input:focus { 
-            border-color: #00d2ff; 
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
-            background: rgba(6, 12, 22, 0.9);
+            border-color: var(--primary); 
         }
 
         .btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #00d2ff, #008fb3);
-            color: #050b14;
+            padding: 12px;
+            background: var(--primary-gradient);
+            color: #000;
             border: none;
             border-radius: 8px;
-            font-family: 'Orbitron', monospace;
-            font-weight: 700;
-            font-size: 0.95rem;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 0.92rem;
             cursor: pointer;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+            margin-top: 10px;
+            transition: opacity 0.2s;
         }
 
         .btn:hover { 
-            background: #00e5ff;
-            box-shadow: 0 0 25px rgba(0, 210, 255, 0.6);
-            transform: translateY(-2px);
+            opacity: 0.95;
         }
 
-        .toggle-text {
-            margin-top: 22px;
-            font-size: 0.85rem;
+        .toggle-link {
+            margin-top: 20px;
+            font-size: 0.82rem;
             cursor: pointer;
-            color: #8fa3b7;
-            transition: 0.3s;
-            font-family: 'Fira Code', monospace;
+            color: var(--text-secondary);
+            transition: 0.2s;
         }
 
-        .toggle-text:hover { 
-            color: #00d2ff; 
+        .toggle-link:hover { 
+            color: var(--primary); 
             text-decoration: underline; 
-            text-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
         }
 
         #status-msg { 
-            margin-top: 15px; 
-            font-size: 0.85rem; 
-            min-height: 22px;
-            font-family: 'Fira Code', monospace;
-            font-weight: 600;
-        }
-
-        .footer-note {
-            margin-top: 25px;
-            font-size: 0.7rem;
-            color: #52637a;
-            letter-spacing: 1px;
+            margin-top: 14px; 
+            font-size: 0.82rem; 
+            min-height: 20px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
 <div class="login-card">
-    <div class="logo-badge">
+    <div class="logo-wrap">
         <img src="akra.png" alt="AKRA">
     </div>
-    <h2 id="form-title">SYSTEM LOGIN</h2>
-    <div class="subtitle" id="form-subtitle">Authorized Operator Gateway</div>
+    <h2 id="form-title">Operator Sign In</h2>
+    <div class="subtitle" id="form-subtitle">Enter your operator credentials to access AKRA</div>
     <div id="status-msg"></div>
 
     <form onsubmit="handleFormSubmit(event)">
         <div class="input-group">
-            <label for="username">OPERATOR ID</label>
-            <input type="text" id="username" placeholder="Enter Operator ID..." autocomplete="username" required>
+            <label for="username">Operator Username</label>
+            <input type="text" id="username" placeholder="Username..." autocomplete="username" required>
         </div>
 
         <div class="input-group">
-            <label for="password">ACCESS KEY (PASSWORD)</label>
-            <input type="password" id="password" placeholder="Enter Access Key..." autocomplete="current-password" required>
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Password..." autocomplete="current-password" required>
         </div>
 
-        <button type="submit" class="btn" id="main-btn">INITIALIZE LINK</button>
+        <button type="submit" class="btn" id="main-btn">Sign In</button>
     </form>
     
-    <div class="toggle-text" id="toggle-link" onclick="toggleMode()">New Operator? Request Registry.</div>
-
-    <div class="footer-note">AKRA SECURE NEURAL PROTOCOL v2.6</div>
+    <div class="toggle-link" id="toggle-link" onclick="toggleMode()">New Operator? Create an account.</div>
 </div>
 
 <script>
@@ -221,10 +186,10 @@
 
     function toggleMode() {
         isLoginMode = !isLoginMode;
-        document.getElementById('form-title').innerText = isLoginMode ? "SYSTEM LOGIN" : "REGISTER OPERATOR";
-        document.getElementById('form-subtitle').innerText = isLoginMode ? "Authorized Operator Gateway" : "Create Private Sector Credentials";
-        document.getElementById('main-btn').innerText = isLoginMode ? "INITIALIZE LINK" : "CREATE OPERATOR ACCOUNT";
-        document.getElementById('toggle-link').innerText = isLoginMode ? "New Operator? Request Registry." : "Already have ID? Sign In.";
+        document.getElementById('form-title').innerText = isLoginMode ? "Operator Sign In" : "Create Operator Account";
+        document.getElementById('form-subtitle').innerText = isLoginMode ? "Enter your operator credentials to access AKRA" : "Register a new operator profile";
+        document.getElementById('main-btn').innerText = isLoginMode ? "Sign In" : "Create Account";
+        document.getElementById('toggle-link').innerText = isLoginMode ? "New Operator? Create an account." : "Already registered? Sign In.";
         document.getElementById('status-msg').innerText = "";
     }
 
@@ -240,13 +205,13 @@
 
         if (!user || !pass) {
             status.style.color = "var(--danger)";
-            status.innerText = "Error: Credentials incomplete.";
+            status.innerText = "Please fill in all fields.";
             return;
         }
 
         const route = isLoginMode ? '/login' : '/signup';
-        status.style.color = "#00d2ff";
-        status.innerText = isLoginMode ? "Authenticating Operator..." : "Provisioning Sector...";
+        status.style.color = "var(--primary)";
+        status.innerText = isLoginMode ? "Signing in..." : "Creating account...";
 
         try {
             const response = await fetch(route, {
@@ -259,11 +224,11 @@
 
             if (response.ok) {
                 if (isLoginMode) {
-                    status.style.color = "#00ff88";
-                    status.innerText = "ACCESS GRANTED. Redirecting to Core Interface...";
-                    setTimeout(() => window.location.href = "/", 800);
+                    status.style.color = "#10b981";
+                    status.innerText = "Access granted! Loading...";
+                    setTimeout(() => window.location.href = "/", 600);
                 } else {
-                    alert("Account Created Successfully! Your private sector is initialized. Please log in.");
+                    alert("Account created successfully! Please sign in.");
                     toggleMode();
                     document.getElementById('username').value = user;
                     document.getElementById('password').value = "";
@@ -271,14 +236,14 @@
             } else {
                 status.style.color = "var(--danger)";
                 if (data.banned) {
-                    status.innerText = "🚫 ACCESS DENIED: Account suspended/banned by Admin.";
+                    status.innerText = "🚫 ACCESS DENIED: Account suspended by Admin.";
                 } else {
-                    status.innerText = data.message || "ACCESS DENIED: Invalid credentials.";
+                    status.innerText = data.message || "Invalid credentials.";
                 }
             }
         } catch (err) {
             status.style.color = "var(--danger)";
-            status.innerText = "SYSTEM ERROR: Neural Link connection failed.";
+            status.innerText = "Server connection error.";
         }
     }
 </script>
