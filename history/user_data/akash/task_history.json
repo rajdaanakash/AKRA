@@ -28,5 +28,11 @@
         "mission": "general",
         "you": "tell me about your creator",
         "AKRA": "**Akash\u202f\u2014\u202fthe brain behind AKRA**\n\n| Detail | Info |\n|--------|------|\n| **Full name** | Akash (goes by the handle **__akash___2255** online) |\n| **DOB** | 18\u202fJuly\u202f2006 |\n| **Education** | \u2022\u202fJawahar\u202fNavodaya\u202fVidyalaya, Barabanki (schooling)<br>\u2022\u202fB.Sc. Computer Science, Bhaskaracharya College of Applied Sciences, University of Delhi |\n| **Passion projects** | \u2022\u202fBiometric authentication system (AI\u2011driven, real\u2011time fingerprint & iris analysis) <br>\u2022\u202fOpen\u2011source contributions on GitHub \u2013 see\u202f[`github.com/rajdaanakash`](https://github.com/rajdaanakash) |\n| **What he loves** | \u2022\u202fTinkering with Windows\u202f11 customisations (Windhawk, RoundedTB, TranslucentTB)<br>\u2022\u202fGaming marathons \u2013 BGMI, PUBG\u202fPC, GTA\u202fV, Uncharted, The\u202fLast\u202fof\u202fUs<br>\u2022\u202fKeeping a watch\u2011list on TMDB, streaming on Netflix & Spotify (Student tier) |\n| **Connect** | Instagram: **[@__akash___2255](https://instagram.com/__akash___2255)**<br>GitHub: **[rajdaanakash](https://github.com/rajdaanakash)** |\n\nIn short, Akash is a Delhi\u2011based CS undergrad who loves building cool AI tools (like the biometric project that sparked AKRA) and spends his free time gaming, customizing his desktop, and sharing his tech journey online. Anything else you want to know about him? \ud83d\ude4c"
+    },
+    {
+        "timestamp": "2026-08-27 00:39:42",
+        "mission": "general",
+        "you": "create pdf",
+        "AKRA": "MISSION_PDF_READY:mission_report_190942.pdf"
     }
 ]
