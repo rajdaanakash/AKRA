@@ -40,5 +40,12 @@
         "is_banned": false,
         "created_at": "2026-08-26 16:51:14",
         "last_login": "2026-08-26 16:51:22"
+    },
+    "happy": {
+        "password_hash": "scrypt:32768:8:1$KEALsJuNK8DZku6y$f2361ff16f857cba9bacbf2bea28577b6c606f27e88cd0d3ba3c2236cbdbd6a1fb30c361db65983cac4b27c6da3939f5115e50da08d77cbe3d092bc8ce0dad16",
+        "role": "operator",
+        "is_banned": false,
+        "created_at": "2026-08-26 19:18:02",
+        "last_login": null
     }
 }
