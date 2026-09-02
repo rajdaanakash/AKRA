@@ -70,5 +70,11 @@
         "mission": "general",
         "you": "Can you extract any link",
         "AKRA": "Sure thing! Here are the URLs that appeared in the conversation so far:\n\n| Description | URL |\n|-------------|-----|\n| **Akash\u2019s Instagram** | <https://instagram.com/__akash___2255> |\n| **Akash\u2019s GitHub profile** | <https://github.com/rajdaanakash> |\n\nIf you need any other links (e.g., streaming platforms, movie sites, etc.) just let me know! \ud83d\ude4c"
+    },
+    {
+        "timestamp": "2026-09-02 19:10:57",
+        "mission": "general",
+        "you": "You know your creator",
+        "AKRA": "Absolutely\u2014I\u2019m built by Akash, the Delhi\u2011based CS student who\u2019s into AI\u2011driven biometric auth, Windows\u202f11 customisation, and a solid gaming\u2011and\u2011streaming setup. He designed me to be his \u201csecond brain,\u201d helping with code snippets, research notes, quick data look\u2011ups, and even movie\u2011night suggestions. \n\nAnything specific you\u2019d like to know about him or how we can put his projects to work for you? \ud83d\ude4c"
     }
 ]
