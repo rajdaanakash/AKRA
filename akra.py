@@ -25,6 +25,8 @@ from pygments.styles import get_style_by_name
 from pygments.util import ClassNotFound
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+import base64
+import markitdown_engine
 
 # --- DIRECTORY CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -675,6 +677,57 @@ def process_eva_command(query):
     query = query.strip()
     q_lower = query.lower()
     
+    # 0. YOUTUBE VIDEO TO TEXT & SYNTHESIS (via Microsoft MarkItDown)
+    yt_urls = markitdown_engine.extract_youtube_urls(query)
+    if yt_urls:
+        target_yt_url = yt_urls[0]
+        yt_conv = markitdown_engine.convert_source_to_markdown(target_yt_url)
+        if yt_conv.get("status") == "success":
+            yt_title = yt_conv.get("title", "YouTube Video")
+            yt_md = yt_conv.get("markdown", "")
+            
+            # Save into active sector archive
+            current_user = session.get('user', 'Operator')
+            safe_yt_name = re.sub(r'[^\w\s-]', '', yt_title).strip()[:40] or "youtube_video"
+            markitdown_engine.save_sector_document(
+                HISTORY_DIR, current_user, active_mission, f"{safe_yt_name}.md", yt_md, doc_type="youtube"
+            )
+            
+            # Pass transcript into AI reasoning
+            prompt = (
+                f"The user provided this YouTube Video:\n"
+                f"Title: {yt_title}\n"
+                f"URL: {target_yt_url}\n\n"
+                f"Video Metadata & Transcript:\n{yt_md[:12000]}\n\n"
+                f"User Request: {query}\n\n"
+                f"Provide an insightful, concise, and structured breakdown based on this video's transcript."
+            )
+            return get_ai_response(prompt)
+        else:
+            return f"Unable to extract YouTube transcript ({yt_conv.get('message', 'Subtitles or video unavailable')})."
+
+    # 0.1 SECTOR DOCUMENT & KNOWLEDGE SEARCH
+    if any(q_lower.startswith(k) for k in ["search document", "search documents", "search sector", "search file", "search files"]):
+        search_target = re.sub(r'^(search documents?|search sectors?|search files?)\s*(for\s*)?', '', q_lower).strip()
+        if search_target:
+            current_user = session.get('user', 'Operator')
+            search_results = markitdown_engine.search_sector_documents(HISTORY_DIR, current_user, active_mission, search_target)
+            if search_results:
+                docs_summary = ""
+                for res in search_results:
+                    docs_summary += f"\n### File: {res['filename']} ({res['match_count']} matches)\n"
+                    for snippet in res['snippets']:
+                        docs_summary += f"> {snippet}\n\n"
+                
+                prompt = (
+                    f"The user searched their sector documents for: '{search_target}'.\n"
+                    f"Here are the relevant excerpts found:\n{docs_summary}\n\n"
+                    f"Synthesize an answer addressing their query directly based on these documents."
+                )
+                return get_ai_response(prompt)
+            else:
+                return f"No documents or transcripts found in sector '{active_mission.upper()}' matching '{search_target}'."
+
     # 1. MOVIE & CINEMATIC
     if any(k in q_lower for k in ["new movies", "latest movies", "released today"]):
         data = fetch_external_data("new_movies", "")
@@ -1168,13 +1221,58 @@ def run_eva():
     image_data = data.get("image_data")
     user_query = data.get("transcript", "").strip()
     
-    response_text = ""
+    # Check for general file / document / audio attachment (MarkItDown intake)
+    attachment = data.get("attachment") or {}
+    att_content = attachment.get("content") or data.get("document_data") or data.get("media_data")
+    att_name = attachment.get("name") or data.get("document_name") or data.get("filename") or ""
 
-    if image_data:
+    response_text = ""
+    current_user = session.get('user', 'Operator')
+
+    if att_content and att_name:
+        try:
+            raw_base64 = att_content
+            if "base64," in raw_base64:
+                raw_base64 = raw_base64.split("base64,")[1]
+            file_bytes = base64.b64decode(raw_base64)
+            
+            # Universal MarkItDown conversion
+            conv_res = markitdown_engine.convert_source_to_markdown(file_bytes, filename=att_name)
+            
+            if conv_res.get("status") == "success":
+                converted_md = conv_res.get("markdown", "")
+                doc_type = conv_res.get("type", "document")
+                
+                # Save to user's sector memory archive
+                markitdown_engine.save_sector_document(
+                    HISTORY_DIR, current_user, active_mission, att_name, converted_md, doc_type=doc_type
+                )
+                
+                prompt = (
+                    f"[ATTACHMENT PROCESSED VIA MARKITDOWN: {att_name} ({doc_type.upper()})]\n\n"
+                    f"Content / Transcript:\n{converted_md[:12000]}\n\n"
+                    f"User Prompt: {user_query if user_query else 'Analyze, extract key points, and summarize this attachment.'}\n\n"
+                    f"Provide an accurate and thorough response based on this file."
+                )
+                response_text = get_ai_response(prompt)
+            else:
+                response_text = f"MarkItDown conversion error: {conv_res.get('message', 'Unable to parse file')}"
+        except Exception as e:
+            response_text = f"Attachment Intake Error: {str(e)}"
+
+    elif image_data:
         prompt = user_query if user_query else "Describe this image in detail."
         try:
-            response_text = analyze_image_qa(image_data, prompt)
-            response_text = f"[Visual Analysis] {response_text}"
+            # First try MarkItDown intake if image has text/metadata
+            raw_b64 = image_data.split("base64,")[1] if "base64," in image_data else image_data
+            img_bytes = base64.b64decode(raw_b64)
+            conv_res = markitdown_engine.convert_source_to_markdown(img_bytes, filename="scan.png", ext=".png")
+            if conv_res.get("status") == "success" and len(conv_res.get("markdown", "").strip()) > 30:
+                prompt_md = f"Image metadata and extracted text:\n{conv_res['markdown']}\n\nUser Question: {prompt}"
+                response_text = f"[Visual OCR Scan]\n{get_ai_response(prompt_md)}"
+            else:
+                response_text = analyze_image_qa(image_data, prompt)
+                response_text = f"[Visual Analysis] {response_text}"
         except Exception as e:
             response_text = f"Visual Core Error: {str(e)}"
     elif user_query:
@@ -1185,16 +1283,50 @@ def run_eva():
             })
         response_text = process_eva_command(user_query)
     else:
-        return jsonify({"response": "I am standing by, Sir. Please provide a command or an image."})
+        return jsonify({"response": "I am standing by, Sir. Please provide a command or an attachment."})
 
     # Single-point logging
-    log_task(user_query or "[Visual Scan]", response_text)
+    log_turn_name = user_query or (f"[{att_name}]" if att_name else "[Visual Scan]")
+    log_task(log_turn_name, response_text)
 
     return jsonify({
-        "transcript": user_query or "[Image Uploaded]", 
+        "transcript": log_turn_name, 
         "response": response_text,
         "audio": "frontend" if io_config["speaker"] == "Frontend" else "backend"
     })
+
+# --- MARKITDOWN MEDIA & SEARCH APIS ---
+
+@app.route('/api/convert-media', methods=['POST'])
+@login_required
+def api_convert_media():
+    """Converts a URL (YouTube, Web) or uploaded document to Markdown using MarkItDown."""
+    data = request.get_json() or {}
+    url = data.get("url", "").strip()
+    current_user = session['user']
+
+    if url:
+        res = markitdown_engine.convert_source_to_markdown(url)
+        if res.get("status") == "success":
+            title = res.get("title", "Converted Media")
+            markitdown_engine.save_sector_document(
+                HISTORY_DIR, current_user, active_mission, f"{title[:40]}.md", res.get("markdown", ""), doc_type=res.get("type", "web")
+            )
+        return jsonify(res)
+
+    return jsonify({"status": "error", "message": "No valid URL provided."}), 400
+
+@app.route('/api/sector/search', methods=['GET'])
+@login_required
+def api_sector_search():
+    """Searches documents and transcripts within the active sector."""
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({"results": []})
+    
+    current_user = session['user']
+    results = markitdown_engine.search_sector_documents(HISTORY_DIR, current_user, active_mission, query)
+    return jsonify({"results": results, "sector": active_mission, "query": query})
 
 @app.route('/run-shortcut', methods=['POST'])
 @login_required

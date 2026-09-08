@@ -11,3 +11,9 @@ python-dotenv
 fpdf2
 pygments
 Flask-Bcrypt
+markitdown
+youtube-transcript-api
+pdfminer.six
+mammoth
+openpyxl
+python-pptx

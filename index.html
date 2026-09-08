@@ -172,17 +172,17 @@
                             <p id="welcome-hero-subtitle">Ask anything, attach code/screenshots, or give a voice command.</p>
                             
                             <div class="prompt-chips-grid">
+                                <button class="prompt-chip" onclick="quickPrompt('Summarize this YouTube video: ')">
+                                    <span class="chip-icon">🎥</span>
+                                    <span class="chip-text">YouTube Video to Text</span>
+                                </button>
+                                <button class="prompt-chip" onclick="quickPrompt('Search documents for ')">
+                                    <span class="chip-icon">🔍</span>
+                                    <span class="chip-text">Search Sector Documents</span>
+                                </button>
                                 <button class="prompt-chip" onclick="quickPrompt('What are the latest news updates in India today?')">
                                     <span class="chip-icon">📰</span>
                                     <span class="chip-text">Latest News in India</span>
-                                </button>
-                                <button class="prompt-chip" onclick="quickPrompt('What are the latest movie releases in India?')">
-                                    <span class="chip-icon">🎬</span>
-                                    <span class="chip-text">New Movie Releases</span>
-                                </button>
-                                <button class="prompt-chip" onclick="promptNewSector()">
-                                    <span class="chip-icon">📁</span>
-                                    <span class="chip-text">Create Project Sector</span>
                                 </button>
                                 <button class="prompt-chip" onclick="quickPrompt('create pdf')">
                                     <span class="chip-icon">📄</span>
@@ -201,23 +201,24 @@
                         <button class="voice-cancel-btn" onclick="toggleListening()">Stop Listening</button>
                     </div>
 
-                    <!-- Attachment Preview Container -->
-                    <div id="image-preview-container" class="attachment-preview-box" style="display: none;">
-                        <img id="image-preview" src="" alt="Attached Screenshot">
+                    <!-- Universal Attachment Preview Container (MarkItDown) -->
+                    <div id="attachment-preview-container" class="attachment-preview-box" style="display: none;">
+                        <div class="attachment-icon-badge" id="attachment-type-icon">📄</div>
+                        <img id="image-preview" src="" alt="Attached Preview" style="display: none;">
                         <div class="attachment-info">
-                            <span>Visual scan attached</span>
+                            <span id="attachment-filename-label">Attachment ready</span>
                             <button onclick="clearAttachment()" class="remove-attachment-btn">✕ Remove</button>
                         </div>
                     </div>
 
                     <!-- Bottom Fixed Input Bar -->
                     <div class="chat-input-bar">
-                        <button class="input-tool-btn" onclick="uploadImage()" title="Attach Image or Screenshot">
+                        <button class="input-tool-btn" onclick="uploadAttachment()" title="Attach PDF, Word, Excel, Audio, or Images (MarkItDown)">
                             📎
                         </button>
                         
                         <div class="input-field-wrap">
-                            <textarea id="userPrompt" placeholder="Message AKRA (Enter to send, Shift+Enter for new line)..." rows="1"></textarea>
+                            <textarea id="userPrompt" placeholder="Message AKRA, paste YouTube link, or ask about files (Enter to send)..." rows="1"></textarea>
                         </div>
 
                         <button class="mic-toggle-btn" id="mic-btn" onclick="toggleListening()" title="Voice Input">

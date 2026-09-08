@@ -453,12 +453,14 @@ function copyMessageText(msgId) {
     }
 }
 
-// --- SENDING PROMPTS & ATTACHMENTS ---
+// --- SENDING PROMPTS & MARKITDOWN ATTACHMENTS ---
 
-function uploadImage() {
+let attachedFile = null;
+
+function uploadAttachment() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
-    fileInput.accept = 'image/*';
+    fileInput.accept = 'image/*,audio/*,.pdf,.docx,.pptx,.xlsx,.xls,.csv,.txt,.md,.json,.py';
 
     fileInput.onchange = (e) => {
         const file = e.target.files[0];
@@ -466,23 +468,63 @@ function uploadImage() {
 
         const reader = new FileReader();
         reader.onload = () => {
-            attachedImageData = reader.result;
-            const previewContainer = document.getElementById('image-preview-container');
+            attachedFile = {
+                name: file.name,
+                type: file.type || 'application/octet-stream',
+                size: file.size,
+                content: reader.result
+            };
+
+            const previewContainer = document.getElementById('attachment-preview-container') || document.getElementById('image-preview-container');
             const previewImg = document.getElementById('image-preview');
-            if (previewImg && previewContainer) {
-                previewImg.src = attachedImageData;
-                previewContainer.style.display = "flex";
+            const typeIcon = document.getElementById('attachment-type-icon');
+            const filenameLabel = document.getElementById('attachment-filename-label');
+
+            if (filenameLabel) filenameLabel.innerText = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+
+            if (file.type.startsWith('image/')) {
+                if (previewImg) {
+                    previewImg.src = reader.result;
+                    previewImg.style.display = 'block';
+                }
+                if (typeIcon) typeIcon.style.display = 'none';
+            } else {
+                if (previewImg) previewImg.style.display = 'none';
+                if (typeIcon) {
+                    typeIcon.style.display = 'block';
+                    if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|m4a|ogg)$/i)) {
+                        typeIcon.innerText = '🎵';
+                    } else if (file.name.endsWith('.pdf')) {
+                        typeIcon.innerText = '📄';
+                    } else if (file.name.match(/\.(docx|doc)$/i)) {
+                        typeIcon.innerText = '📝';
+                    } else if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                        typeIcon.innerText = '📊';
+                    } else if (file.name.match(/\.(pptx|ppt)$/i)) {
+                        typeIcon.innerText = '📊';
+                    } else {
+                        typeIcon.innerText = '📁';
+                    }
+                }
             }
-            showToast("Visual scan attached.");
+
+            if (previewContainer) previewContainer.style.display = 'flex';
+            showToast(`Attached: ${file.name}`);
         };
         reader.readAsDataURL(file);
     };
     fileInput.click();
 }
 
+// Backward compatibility alias
+function uploadImage() {
+    uploadAttachment();
+}
+
 function clearAttachment() {
+    attachedFile = null;
     attachedImageData = null;
-    const previewContainer = document.getElementById('image-preview-container');
+    const previewContainer = document.getElementById('attachment-preview-container') || document.getElementById('image-preview-container');
     if (previewContainer) previewContainer.style.display = "none";
 }
 
@@ -490,26 +532,46 @@ function quickPrompt(text) {
     const input = document.getElementById('userPrompt');
     if (input) {
         input.value = text;
-        sendTextPrompt();
+        input.focus();
+        if (!text.endsWith(" ") && !text.endsWith(":")) {
+            sendTextPrompt();
+        }
     }
 }
 
 async function sendTextPrompt() {
     const input = document.getElementById('userPrompt');
     const userMessage = input.value.trim();
-    const imagePayload = attachedImageData;
+    const currentAttachment = attachedFile;
 
-    if (!userMessage && !imagePayload) return;
+    if (!userMessage && !currentAttachment) return;
+
+    let attachmentLabel = "";
+    let isImg = false;
+    let imgData = null;
+
+    if (currentAttachment) {
+        if (currentAttachment.type.startsWith('image/')) {
+            isImg = true;
+            imgData = currentAttachment.content;
+        } else {
+            attachmentLabel = `📎 **Attached:** \`${currentAttachment.name}\``;
+        }
+    }
 
     // Display user message in chat
-    appendMessage("user", userMessage || "[Visual Inspection]", null, imagePayload);
+    const displayMsg = attachmentLabel 
+        ? (userMessage ? `${attachmentLabel}\n\n${userMessage}` : attachmentLabel)
+        : (userMessage || "[Attachment]");
+        
+    appendMessage("user", displayMsg, null, imgData);
 
     // Reset input
     input.value = "";
     input.style.height = 'auto';
     clearAttachment();
 
-    setSystemStatus("Processing...", true);
+    setSystemStatus("Processing (AKRA & MarkItDown)...", true);
 
     // Show Typing indicator
     const typingId = "typing-" + Date.now();
@@ -529,13 +591,20 @@ async function sendTextPrompt() {
     scrollChatBottom();
 
     try {
+        const payload = {
+            "transcript": userMessage,
+            "attachment": currentAttachment ? {
+                "name": currentAttachment.name,
+                "type": currentAttachment.type,
+                "content": currentAttachment.content
+            } : null,
+            "image_data": (currentAttachment && isImg) ? currentAttachment.content : null
+        };
+
         const res = await fetch('/run-eva', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                "transcript": userMessage,
-                "image_data": imagePayload
-            })
+            body: JSON.stringify(payload)
         });
 
         const tEl = document.getElementById(typingId);
